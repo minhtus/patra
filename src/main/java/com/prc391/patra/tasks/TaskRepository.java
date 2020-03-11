@@ -1,4 +1,6 @@
 package com.prc391.patra.tasks;
 
-public class TaskRepository {
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+interface TaskRepository extends MongoRepository<Task, String> {
 }

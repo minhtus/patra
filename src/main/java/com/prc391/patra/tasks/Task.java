@@ -1,5 +1,6 @@
 package com.prc391.patra.tasks;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -7,10 +8,14 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.MongoId;
 
 @Document
-@Getter
-@Setter
-public class Task {
+@Data
+class Task {
     @MongoId
-    @Field("task_id")
-    private long taskId;
+    private String taskId;
+    private String listId;
+    private String taskName;
+    private String taskDescription;
+    private String taskDetails;
+    private int status;
+    private long dueDate;
 }
