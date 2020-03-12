@@ -1,21 +1,25 @@
 package com.prc391.patra.tasks;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 @Document
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class Task {
-    @MongoId
+    @Id
+    @JsonIgnore
     private String taskId;
     private String listId;
+    private String creatorUsername;
+    private String[] assigneeUsername;
     private String taskName;
     private String taskDescription;
     private String taskDetails;
-    private int status;
+    private int statusId;
     private long dueDate;
+    private Comment[] comments;
 }
