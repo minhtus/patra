@@ -1,4 +1,4 @@
-package com.prc391.patra.users;
+package com.prc391.patra.users.role;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -8,14 +8,9 @@ import java.util.List;
 
 @Document
 @Data
-public class User {
+public class Role {
     @Id
-    private String id;
-    private String username;
-    private String passHash;
+    private long id;
     private String name;
-
-    private boolean enabled;
-
-    private List<Long> roles;
+    private List<Long> permissions;
 }
