@@ -1,6 +1,7 @@
 package com.prc391.patra.filter;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,12 +20,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.prc391.patra.users.TokenAuthenticationService.HEADER_STRING;
 import static com.prc391.patra.users.TokenAuthenticationService.SECRET;
 import static com.prc391.patra.users.TokenAuthenticationService.TOKEN_PREFIX;
 
 public class JWTAuthenticationFilter extends GenericFilterBean {
+
+    private final Logger logger = Logger.getLogger("JWTAuthenticationFilter");
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         Authentication authentication = this.getAuthentication((HttpServletRequest) request);
@@ -38,14 +44,21 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
 
     public Authentication getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(HEADER_STRING);
-        if (token != null) {
-            Jws<Claims> claims = Jwts.parser().setSigningKey(SECRET)
-                    .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
-            Claims body = claims.getBody();
-            String user = body.getSubject();
-            List<Map<String, Object>> authorities = body.get("authorities", List.class);
-            return user != null ?
-                    new UsernamePasswordAuthenticationToken(user, null, getGrantedAuthorities(authorities)) : null;
+        try {
+            if (token != null) {
+                Jws<Claims> claims = Jwts.parser().setSigningKey(SECRET)
+                        .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
+                Claims body = claims.getBody();
+                String user = body.getSubject();
+                List<Map<String, Object>> authorities = body.get("authorities", List.class);
+                return user != null ?
+                        new UsernamePasswordAuthenticationToken(user, null, getGrantedAuthorities(authorities)) : null;
+            } else {
+                //TODO: throw new Token Null Exception here
+            }
+        } catch (ExpiredJwtException ex) {
+            logger.log(Level.INFO, "Header: " + ex.getHeader() + " Claims: " + ex.getClaims() + "Token expired: " + ex.getMessage());
+//            throw new ExpiredJwtException(ex.getHeader() ,ex.getClaims(), "Token expired: " + ex.getMessage());
         }
         //TODO: throw exception
         return null;
