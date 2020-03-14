@@ -25,7 +25,7 @@ public class CommentRepositoryImpl implements CommentRepository {
     public boolean insertComment(String taskId, Comment comment) {
         UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
                 new Update().push("comments", comment), Task.class);
-        return result.wasAcknowledged();
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
 
     @Override
@@ -37,6 +37,13 @@ public class CommentRepositoryImpl implements CommentRepository {
         UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)
                         .and("comments.comment_id").is(comment.getCommentId())),
                 new Update().set("comments.$", comment), Task.class);
-        return result.wasAcknowledged();
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
+    }
+
+    @Override
+    public boolean deleteComment(String taskId, String commentId) {
+        UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
+                new Update().pull("comments", query(where("comment_id").is(commentId))), Task.class);
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
 }
