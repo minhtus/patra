@@ -1,10 +1,11 @@
 package com.prc391.patra.tasks;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CommentService {
@@ -16,13 +17,22 @@ public class CommentService {
     }
 
     boolean comment(String taskId, Comment comment) throws EntityNotFoundException {
-        Optional<Task> result = taskRepository.findById(taskId);
-        if (!result.isPresent()) {
+        if (!taskRepository.existsById(taskId)) {
             throw new EntityNotFoundException();
         }
-        Task commentTask = result.get();
-        // comment
-        taskRepository.insertComment(taskId, comment);
-        return true;
+        comment.setCommentId(new ObjectId().toString());
+        comment.setCommentTimestamp(System.currentTimeMillis());
+        return taskRepository.insertComment(taskId, comment);
+    }
+
+    boolean updateComment(String taskId, String commentId, Comment comment) throws EntityNotFoundException {
+        if (!taskRepository.existsById(taskId)) {
+            throw new EntityNotFoundException();
+        }
+        if (!taskRepository.commentExist(taskId, commentId)) {
+            throw new EntityNotFoundException();
+        }
+        comment.setCommentId(commentId);
+        return taskRepository.updateComment(taskId, comment);
     }
 }
