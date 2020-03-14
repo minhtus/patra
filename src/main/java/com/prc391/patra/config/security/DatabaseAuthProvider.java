@@ -76,6 +76,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     /**
      * lay cac authority (cac permission) de phuc vu cho viec phan quyen trong @PreAuthorize
+     *
      * @param rolesId List id cua role ma User so huu
      * @return cac permission da duoc bien thanh kieu SimpleGrantedAuthority
      */
@@ -89,6 +90,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     /**
      * Convert permission thanh SimpleGrantedAuthority
+     *
      * @param permissions permission can bien
      * @return SimpleGrantedAuthority cua permission
      */
@@ -102,6 +104,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     /**
      * Ham lap de lay cac permission trong role
+     *
      * @param roles roles can lay permission
      * @return List ten cua permission
      */
