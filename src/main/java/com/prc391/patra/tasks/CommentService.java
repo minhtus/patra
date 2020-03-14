@@ -5,8 +5,6 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 public class CommentService {
     private final TaskRepository taskRepository;
@@ -34,5 +32,15 @@ public class CommentService {
         }
         comment.setCommentId(commentId);
         return taskRepository.updateComment(taskId, comment);
+    }
+
+    boolean deleteComment(String taskId, String commentId) throws EntityNotFoundException {
+        if (!taskRepository.existsById(taskId)) {
+            throw new EntityNotFoundException();
+        }
+        if (!taskRepository.commentExist(taskId, commentId)) {
+            throw new EntityNotFoundException();
+        }
+        return taskRepository.deleteComment(taskId, commentId);
     }
 }
