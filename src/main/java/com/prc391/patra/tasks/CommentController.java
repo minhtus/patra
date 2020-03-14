@@ -2,14 +2,12 @@ package com.prc391.patra.tasks;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/{id}/comments")
+@RequestMapping("tasks/{id}/comments")
 public class CommentController {
     private final CommentService commentService;
 
@@ -19,8 +17,24 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity comment(@PathVariable("id") String id, Comment comment) throws EntityNotFoundException {
-        commentService.comment(id, comment);
-        return ResponseEntity.ok().build();
+    public ResponseEntity comment(@PathVariable("id") String id, @RequestBody Comment comment) throws EntityNotFoundException {
+        boolean result = commentService.comment(id, comment);
+        if (result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+    }
+
+    @PutMapping("/{commentId}")
+    public ResponseEntity editComment(@PathVariable("id") String taskId, @PathVariable("commentId") String commentId,
+                                           @RequestBody Comment comment) throws EntityNotFoundException {
+        boolean result = commentService.updateComment(taskId, commentId, comment);
+        if (result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
