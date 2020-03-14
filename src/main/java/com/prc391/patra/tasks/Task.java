@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class Task {
+public class Task {
     @Id
     @JsonIgnore
     private String taskId;
