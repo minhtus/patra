@@ -37,4 +37,14 @@ public class CommentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity deleteComment(@PathVariable("id") String taskId, @PathVariable("commentId") String commentId) throws EntityNotFoundException {
+        boolean result = commentService.deleteComment(taskId, commentId);
+        if (result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
