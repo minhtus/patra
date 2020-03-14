@@ -49,12 +49,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers(HttpMethod.POST, "/login").permitAll()
-                .antMatchers(HttpMethod.GET, "/login").denyAll();
+        //temporary disable this to let anonymous use POST methods
+        //re-enable it (delete this line) before going "production"
+        http.csrf().disable();
+        http.authorizeRequests()
+
+                .antMatchers("/login").permitAll()
+
+        ;
 
         http
-                //stateless: khong tao bat ky session nao va khong dung bat ky session co san nao
-                //session va cookie luon
+                //stateless: won't create cookie and won't use cookie
+                //applies for both session and cookie
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .enableSessionUrlRewriting(false)
@@ -65,7 +71,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                .antMatchers(HttpMethod.POST,"/api/login").permitAll()
                 //hope this will prevent login with GET
 //                .antMatchers(HttpMethod.GET,"/login").denyAll()
-                .anyRequest().authenticated()
+
+                //let anonymous use API for easier developing
+                .anyRequest().permitAll()//.authenticated()
+
 //                .and()
 //                .httpBasic()
         ;
