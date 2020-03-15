@@ -28,15 +28,20 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    Task updateTask(Task task) {
-        return taskRepository.save(task);
+    Task updateTask(String taskId, Task task) throws EntityNotFoundException {
+        boolean exist = taskRepository.existsById(taskId);
+        if (exist) {
+            task.setTaskId(taskId);
+            return taskRepository.save(task);
+        } else {
+            throw new EntityNotFoundException();
+        }
     }
 
-    boolean deleteTask(String taskId) throws EntityNotFoundException {
+    void deleteTask(String taskId) throws EntityNotFoundException {
         boolean exist = taskRepository.existsById(taskId);
         if (exist) {
             taskRepository.deleteById(taskId);
-            return true;
         } else {
             throw new EntityNotFoundException();
         }
