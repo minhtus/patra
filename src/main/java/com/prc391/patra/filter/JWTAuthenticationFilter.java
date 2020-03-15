@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,7 +49,7 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                         .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
                 Claims body = claims.getBody();
                 String user = body.getSubject();
-                List<Map<String, Object>> authorities = body.get("authorities", List.class);
+                List<String> authorities = body.get("authorities", List.class);
                 return user != null ?
                         new UsernamePasswordAuthenticationToken(user, null, getGrantedAuthorities(authorities)) : null;
             } else {
@@ -64,11 +63,19 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
         return null;
     }
 
-    private List<GrantedAuthority> getGrantedAuthorities(List<Map<String, Object>> permissions) {
+    private List<GrantedAuthority> getGrantedAuthorities(List<String> permissions) {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Map permission : permissions) {
-            authorities.add(new SimpleGrantedAuthority((String) permission.get("authority")));
+        for (String permission : permissions) {
+            authorities.add(new SimpleGrantedAuthority(permission));
         }
         return authorities;
     }
+
+//    private List<GrantedAuthority> getGrantedAuthorities(List<Map<String, Object>> permissions) {
+//        List<GrantedAuthority> authorities = new ArrayList<>();
+//        for (Map permission : permissions) {
+//            authorities.add(new SimpleGrantedAuthority((String) permission.get("authority")));
+//        }
+//        return authorities;
+//    }
 }
