@@ -27,4 +27,9 @@ public class ListService {
     List insertList(List list) {
         return listRepository.save(list);
     }
+
+    void deleteList(String listId) {
+        //TODO check permission
+        listRepository.deleteById(listId);
+    }
 }
