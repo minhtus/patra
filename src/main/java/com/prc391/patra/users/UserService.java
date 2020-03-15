@@ -44,15 +44,15 @@ class UserService {
 
         user.setEnabled(newUserInfo.isEnabled());
         List<Long> userRoles = new ArrayList<>();
-        for (Long roleId : newUserInfo.getRoles()) {
-            Optional<Role> currentRole = roleRepository.findById(roleId);
-            if (currentRole.isPresent()) {
-                userRoles.add(roleId);
-            } else {
-                //TODO: role is not present
-            }
-        }
-        user.setRoles(userRoles);
+//        for (Long roleId : newUserInfo.getRoles()) {
+//            Optional<Role> currentRole = roleRepository.findById(roleId);
+//            if (currentRole.isPresent()) {
+//                userRoles.add(roleId);
+//            } else {
+//                //TODO: role is not present
+//            }
+//        }
+//        user.setRoles(userRoles);
 
         //Do you... really waaaaant to return the hashed password?
         //The password also contains the encoding algorithm, good luck
