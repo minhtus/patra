@@ -15,7 +15,7 @@ public class ListService {
         this.listRepository = listRepository;
     }
 
-    public List getListById(String listId) throws EntityNotFoundException {
+    List getListById(String listId) throws EntityNotFoundException {
         Optional<List> result = listRepository.findById(listId);
         if (result.isPresent()) {
             return result.get();
@@ -24,7 +24,7 @@ public class ListService {
         }
     }
 
-    public List insertNewList(List list) {
+    List insertList(List list) {
         return listRepository.save(list);
     }
 }
