@@ -1,5 +1,7 @@
 package com.prc391.patra.config.security;
 
+import com.prc391.patra.members.Member;
+import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.users.permission.Permission;
@@ -17,11 +19,17 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+//From JWTLoginFilter to DatabaseAuthProvider
 @Component
 public class DatabaseAuthProvider implements AuthenticationProvider {
 
@@ -31,13 +39,16 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     private final PermissionRepository permissionRepository;
 
-    private PasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public DatabaseAuthProvider(UserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository) {
+    public DatabaseAuthProvider(UserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, MemberRepository memberRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
+        this.memberRepository = memberRepository;
         this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
@@ -62,10 +73,24 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
                     ("(user is disabled message, use config file instead of hard coding");
         }
 
+        //Get current working Member, then get the Member's permissions
+
+        String currMemberId = user.getCurrMemberId();
+
+        Optional<Member> currMember = memberRepository.findById(currMemberId != null ? currMemberId : "");
+        if (ObjectUtils.isEmpty(currMember)) {
+            //implement working with noOrg here
+            //or User did not choose an Org yet
+        }
+
+        Map<String, Object> userPrincipal = new HashMap<>();
+        userPrincipal.put("username", username);
+        userPrincipal.put("currMember", currMemberId);
+
         return new UsernamePasswordAuthenticationToken(
+                userPrincipal,
                 username,
-                password,
-                getAuthorities(user.getRoles())
+                getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions()))
         );
     }
 
@@ -74,22 +99,17 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 
-    /**
-     * lay cac authority (cac permission) de phuc vu cho viec phan quyen trong @PreAuthorize
-     *
-     * @param rolesId List id cua role ma User so huu
-     * @return cac permission da duoc bien thanh kieu SimpleGrantedAuthority
-     */
-    private Collection<? extends GrantedAuthority> getAuthorities(Collection<Long> rolesId) {
-        List<Role> roles = new ArrayList<>();
-        for (Long id : rolesId) {
-            roles.add(roleRepository.findById(id).get());
+    private Collection<? extends GrantedAuthority> getAuthoritiesForPermission(
+            Collection<Long> permissionIds) {
+        List<String> permissions = new ArrayList<>();
+        for (Long id : permissionIds) {
+            permissions.add(permissionRepository.findById(id).get().getName());
         }
-        return getGrantedAuthorities(getPermissions(roles));
+        return getGrantedAuthorities(permissions);
     }
 
     /**
-     * Convert permission thanh SimpleGrantedAuthority
+     * Convert permission to SimpleGrantedAuthority
      *
      * @param permissions permission can bien
      * @return SimpleGrantedAuthority cua permission
@@ -103,11 +123,27 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
     }
 
     /**
-     * Ham lap de lay cac permission trong role
+     * lay cac authority (cac permission) de phuc vu cho viec phan quyen trong @PreAuthorize
+     *
+     * @param rolesId List id cua role ma User so huu
+     * @return cac permission da duoc bien thanh kieu SimpleGrantedAuthority
+     */
+    @Deprecated
+    private Collection<? extends GrantedAuthority> getAuthorities(Collection<Long> rolesId) {
+        List<Role> roles = new ArrayList<>();
+        for (Long id : rolesId) {
+            roles.add(roleRepository.findById(id).get());
+        }
+        return getGrantedAuthorities(getPermissions(roles));
+    }
+
+    /**
+     * Get all permission in Role (deprecated)
      *
      * @param roles roles can lay permission
      * @return List ten cua permission
      */
+    @Deprecated
     private List<String> getPermissions(Collection<Role> roles) {
         List<String> privileges = new ArrayList<>();
         List<Permission> permissionsList = new ArrayList<>();
@@ -123,4 +159,6 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         }
         return privileges;
     }
+
+
 }
