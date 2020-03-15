@@ -6,6 +6,7 @@ import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,10 +21,19 @@ public class TaskController {
         this.mapper = mapper;
     }
 
+    //use @PreAuthorize to authorize
+    //please wait while I researching @PostAuthorize
+//    @PreAuthorize("hasAuthority('READ')")
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
         return ResponseEntity.ok(taskService.getByTaskId(taskId));
     }
+
+//    @PreAuthorize("hasAnyAuthority('WRITE')")
+//    @GetMapping("/test-write-premission")
+//    public ResponseEntity<String> testPreAuthorize() throws EntityNotFoundException {
+//        return ResponseEntity.ok("You writed!");
+//    }
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) {
