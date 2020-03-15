@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 public class List {
     @Id
-    @JsonIgnore
     private String listId;
     private String listName;
     private String listDescription;
