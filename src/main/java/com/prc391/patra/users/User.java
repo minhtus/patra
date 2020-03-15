@@ -11,17 +11,16 @@ import java.util.List;
 @Data
 public class User {
     @Id
-    @JsonIgnore
     private String id;
-    private String username;
     private String passHash;
     private String email;
     private String name;
 
     private boolean enabled;
 
-    //TODO: redesign the Permission. This is temporary
+    //TODO: redesign the Permission.
     private String currMemberId;
 
+    //temporary remove Role functionality
 //    private List<Long> roles;
 }
