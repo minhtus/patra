@@ -44,21 +44,29 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+    protected void successfulAuthentication(
+            HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
 //        TokenAuthenticationService.addAuthentication(response, authResult.getName());
 //        String authorizationString = response.getHeader("Authorization");
 
-        String username = authResult.getName();
+//        String username = authResult.getName();
+        Map<String, Object> currUserPrincipal = (Map<String, Object>) authResult.getPrincipal();
+        String currMemberId = (String) currUserPrincipal.get("currMember");
+        String username = (String) currUserPrincipal.get("username");
         List<SimpleGrantedAuthority> authorities = (List<SimpleGrantedAuthority>) authResult.getAuthorities();
-        Set<SimpleGrantedAuthority> setAuthorities = new HashSet<>();
-        setAuthorities.addAll(authorities);
-        Map<String, Object> claimsAuthorities = new HashMap<>();
+        Set<String> setAuthorities = new HashSet<>();
+        for (SimpleGrantedAuthority authority : authorities) {
+            setAuthorities.add(authority.getAuthority());
+        }
+        Map<String, Object> claimsMap = new HashMap<>();
 //        for (SimpleGrantedAuthority authority : authorities) {
 //            claimsAuthorities.put("authority",authority.getAuthority());
 //        }
-        claimsAuthorities.put("authorities", setAuthorities);
+
+        claimsMap.put("authorities", setAuthorities);
+        claimsMap.put("curr_member_id", currMemberId);
         String JWT = Jwts.builder()
-                .setClaims(claimsAuthorities)
+                .setClaims(claimsMap)
                 .setSubject(username)
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS512, SECRET).compact();

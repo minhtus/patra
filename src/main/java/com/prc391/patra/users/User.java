@@ -20,5 +20,8 @@ public class User {
 
     private boolean enabled;
 
+    //TODO: redesign the Permission. This is temporary
+    private String currMemberId;
+
     private List<Long> roles;
 }
