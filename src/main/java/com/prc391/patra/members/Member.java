@@ -3,8 +3,6 @@ package com.prc391.patra.members;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 @Document
 @Data
@@ -13,5 +11,5 @@ public class Member {
     private String memberId;
     private String orgId;
     private String username;
-    private String[] permissions;
+    private Long[] permissions;
 }
