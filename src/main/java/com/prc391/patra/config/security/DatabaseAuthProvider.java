@@ -57,7 +57,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        User user = userRepository.getUserByUsername(username);
+        User user = userRepository.findById(username).get();
 
         //dung config file cho dong thong bao, nhac de khoi quen
         if (user == null) {
