@@ -1,6 +1,5 @@
 package com.prc391.patra.lists;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -9,8 +8,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 public class List {
     @Id
-    @JsonIgnore
     private String listId;
+    private String orgId;
     private String listName;
     private String listDescription;
     private String creatorUsername;

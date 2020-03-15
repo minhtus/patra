@@ -1,4 +1,6 @@
 package com.prc391.patra.members;
 
-public class MemberRepository {
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface MemberRepository extends MongoRepository<Member, String> {
 }
