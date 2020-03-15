@@ -21,17 +21,19 @@ public class TaskController {
         this.mapper = mapper;
     }
 
-    @PreAuthorize("hasAuthority('READ')")
+    //use @PreAuthorize to authorize
+    //please wait while I researching @PostAuthorize
+//    @PreAuthorize("hasAuthority('READ')")
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
         return ResponseEntity.ok(taskService.getByTaskId(taskId));
     }
 
-    @PreAuthorize("hasAnyAuthority('WRITE')")
-    @GetMapping("/test-write-premission")
-    public ResponseEntity<String> testPreAuthorize() throws EntityNotFoundException {
-        return ResponseEntity.ok("You writed!");
-    }
+//    @PreAuthorize("hasAnyAuthority('WRITE')")
+//    @GetMapping("/test-write-premission")
+//    public ResponseEntity<String> testPreAuthorize() throws EntityNotFoundException {
+//        return ResponseEntity.ok("You writed!");
+//    }
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) {
