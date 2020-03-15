@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("tasks/{id}/comments")
+@RequestMapping("/v0/tasks/{id}/comments")
 public class CommentController {
     private final CommentService commentService;
     private final ModelMapper mapper;
