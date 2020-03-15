@@ -1,18 +1,15 @@
 package com.prc391.patra.tasks;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Comment {
-    @JsonIgnore
     private String commentId;
     private String username;
     private String comment;
-    @JsonIgnore
-    private long commentTimestamp;
-    @JsonIgnore
-    private String[] attachmentsPath;
+    private String[] imagesPath;
 }

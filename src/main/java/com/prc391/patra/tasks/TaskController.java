@@ -1,20 +1,23 @@
 package com.prc391.patra.tasks;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.tasks.requests.CreateTaskRequest;
+import com.prc391.patra.tasks.requests.UpdateTaskRequest;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/v0/tasks")
 public class TaskController {
     private final TaskService taskService;
+    private final ModelMapper mapper;
 
     @Autowired
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, ModelMapper mapper) {
         this.taskService = taskService;
+        this.mapper = mapper;
     }
 
     @GetMapping("/{id}")
@@ -23,23 +26,18 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        return ResponseEntity.ok(taskService.insertTask(task));
+    public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) {
+        return ResponseEntity.ok(taskService.insertTask(mapper.map(request, Task.class)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@RequestBody Task task, @PathVariable("id") String taskId) {
-        task.setTaskId(taskId);
-        return ResponseEntity.ok(taskService.updateTask(task));
+    public ResponseEntity<Task> updateTask(@RequestBody UpdateTaskRequest request, @PathVariable("id") String taskId) throws EntityNotFoundException {
+        return ResponseEntity.ok(taskService.updateTask(taskId, mapper.map(request, Task.class)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
-        boolean result = taskService.deleteTask(taskId);
-        if (result) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        taskService.deleteTask(taskId);
+        return ResponseEntity.ok().build();
     }
 }
