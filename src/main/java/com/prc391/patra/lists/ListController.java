@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/lists")
+@RequestMapping("/v0/lists")
 public class ListController {
 
     private final ListService listService;
@@ -29,4 +29,11 @@ public class ListController {
     public ResponseEntity<List> createList(@RequestBody CreateListRequest request) {
         return ResponseEntity.ok(listService.insertList(mapper.map(request, List.class)));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity deleteList(@PathVariable("id") String listId) {
+        listService.deleteList(listId);
+        return ResponseEntity.ok().build();
+    }
+
 }
