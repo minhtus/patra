@@ -23,5 +23,5 @@ public class User {
     //TODO: redesign the Permission. This is temporary
     private String currMemberId;
 
-    private List<Long> roles;
+//    private List<Long> roles;
 }
