@@ -1,5 +1,6 @@
 package com.prc391.patra.users;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.users.request.UserResponse;
 import org.modelmapper.ModelMapper;
@@ -34,7 +35,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> registerUser(@RequestBody User user) {
+    public ResponseEntity<UserResponse> registerUser(@RequestBody User user) throws EntityExistedException {
         return ResponseEntity.ok(mapper.map(userService.registerUser(user), UserResponse.class));
     }
 }
