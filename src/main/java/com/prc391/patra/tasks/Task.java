@@ -20,4 +20,11 @@ public class Task {
     private int statusId;
     private long dueDate;
     private Comment[] comments;
+
+    void mergeForUpdate(Task other) {
+        this.taskName = other.taskName != null ? other.taskName : this.taskName;
+        this.taskDescription = other.taskDescription != null ? other.taskDescription : this.taskDescription;
+        this.taskDetails = other.taskDetails != null ? other.taskDetails : this.taskDetails;
+        this.dueDate = other.dueDate > 0 ? other.dueDate : this.dueDate;
+    }
 }
