@@ -7,6 +7,5 @@ public class UpdateTaskRequest {
     private String taskName;
     private String taskDescription;
     private String taskDetails;
-    private int statusId;
     private long dueDate;
 }
