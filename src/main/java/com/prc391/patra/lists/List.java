@@ -13,4 +13,6 @@ public class List {
     private String listName;
     private String listDescription;
     private String creatorUsername;
+    private boolean privateList;
+    private String[] membersUsername;
 }
