@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/v0/tasks/{id}/comments")
 public class CommentController {
@@ -21,7 +23,7 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity comment(@PathVariable("id") String id, @RequestBody CommentRequest request) throws EntityNotFoundException {
+    public ResponseEntity comment(@PathVariable("id") String id, @Valid @RequestBody CommentRequest request) throws EntityNotFoundException {
         boolean result = commentService.comment(id, mapper.map(request, Comment.class));
         if (result) {
             return ResponseEntity.ok().build();
@@ -33,7 +35,7 @@ public class CommentController {
 
     @PutMapping("/{commentId}")
     public ResponseEntity editComment(@PathVariable("id") String taskId, @PathVariable("commentId") String commentId,
-                                           @RequestBody CommentRequest request) throws EntityNotFoundException {
+                                           @Valid @RequestBody CommentRequest request) throws EntityNotFoundException {
         boolean result = commentService.updateComment(taskId, commentId, mapper.map(request, Comment.class));
         if (result) {
             return ResponseEntity.ok().build();
