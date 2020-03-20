@@ -1,5 +1,7 @@
 package com.prc391.patra.filter;
 
+import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.config.security.SecurityConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -22,10 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.prc391.patra.users.TokenAuthenticationService.HEADER_STRING;
-import static com.prc391.patra.users.TokenAuthenticationService.SECRET;
-import static com.prc391.patra.users.TokenAuthenticationService.TOKEN_PREFIX;
-
 public class JWTAuthenticationFilter extends GenericFilterBean {
 
     private final Logger logger = Logger.getLogger("JWTAuthenticationFilter");
@@ -42,16 +40,20 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
     }
 
     public Authentication getAuthentication(HttpServletRequest request) {
-        String token = request.getHeader(HEADER_STRING);
+        String token = request.getHeader(SecurityConstants.HEADER_STRING);
         try {
             if (token != null) {
-                Jws<Claims> claims = Jwts.parser().setSigningKey(SECRET)
-                        .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
+                Jws<Claims> claims = Jwts.parser().setSigningKey(SecurityConstants.SECRET)
+                        .parseClaimsJws(token.replace(SecurityConstants.TOKEN_PREFIX, ""));
                 Claims body = claims.getBody();
                 String user = body.getSubject();
-                List<String> authorities = body.get("authorities", List.class);
+                List<String> authorities = body.get(SecurityConstants.JWT_CLAIMS_AUTHORITY, List.class);
+                String currMemberId = body.get(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, String.class);
+
+                //passed random password, because the User superclass does not allow null or empty password
+                PatraUserPrincipal principal = new PatraUserPrincipal(user, "a", currMemberId, getGrantedAuthorities(authorities));
                 return user != null ?
-                        new UsernamePasswordAuthenticationToken(user, null, getGrantedAuthorities(authorities)) : null;
+                        new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
             } else {
                 //TODO: throw new Token Null Exception here
             }
