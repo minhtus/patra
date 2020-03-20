@@ -24,9 +24,7 @@ import org.springframework.util.ObjectUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 //From JWTLoginFilter to DatabaseAuthProvider
@@ -83,12 +81,10 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
             //or User did not choose an Org yet
         }
 
-        Map<String, Object> userPrincipal = new HashMap<>();
-        userPrincipal.put("username", username);
-        userPrincipal.put("currMember", currMemberId);
+        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, currMemberId, getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions())));
 
         return new UsernamePasswordAuthenticationToken(
-                userPrincipal,
+                principal,
                 username,
                 getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions()))
         );
