@@ -1,5 +1,7 @@
 package com.prc391.patra.filter;
 
+import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.config.security.SecurityConstants;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,11 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.prc391.patra.users.TokenAuthenticationService.EXPIRATION_TIME;
-import static com.prc391.patra.users.TokenAuthenticationService.HEADER_STRING;
-import static com.prc391.patra.users.TokenAuthenticationService.SECRET;
-import static com.prc391.patra.users.TokenAuthenticationService.TOKEN_PREFIX;
-
 public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 
     public JWTLoginFilter(String url, AuthenticationManager authManager) {
@@ -46,13 +43,10 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
     @Override
     protected void successfulAuthentication(
             HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-//        TokenAuthenticationService.addAuthentication(response, authResult.getName());
-//        String authorizationString = response.getHeader("Authorization");
 
-//        String username = authResult.getName();
-        Map<String, Object> currUserPrincipal = (Map<String, Object>) authResult.getPrincipal();
-        String currMemberId = (String) currUserPrincipal.get("currMember");
-        String username = (String) currUserPrincipal.get("username");
+        PatraUserPrincipal principal = (PatraUserPrincipal) authResult.getPrincipal();
+        String username = principal.getUsername();
+        String currMemberId = principal.getCurrMemberId();
         List<SimpleGrantedAuthority> authorities = (List<SimpleGrantedAuthority>) authResult.getAuthorities();
         Set<String> setAuthorities = new HashSet<>();
         for (SimpleGrantedAuthority authority : authorities) {
@@ -63,13 +57,13 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 //            claimsAuthorities.put("authority",authority.getAuthority());
 //        }
 
-        claimsMap.put("authorities", setAuthorities);
-        claimsMap.put("curr_member_id", currMemberId);
+        claimsMap.put(SecurityConstants.JWT_CLAIMS_AUTHORITY, setAuthorities);
+        claimsMap.put(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, currMemberId);
         String JWT = Jwts.builder()
                 .setClaims(claimsMap)
                 .setSubject(username)
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS512, SECRET).compact();
-        response.addHeader(HEADER_STRING, TOKEN_PREFIX + " " + JWT);
+                .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+                .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
+        response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + " " + JWT);
     }
 }
