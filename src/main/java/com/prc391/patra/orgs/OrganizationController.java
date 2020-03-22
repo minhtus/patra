@@ -1,8 +1,6 @@
-package com.prc391.patra.members;
+package com.prc391.patra.orgs;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.members.requests.CreateMemberRequest;
-import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,43 +15,43 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v0/member")
-public class MemberController {
+@RequestMapping("/v0/organization")
+public class OrganizationController {
 
-    private final MemberService memberService;
+    private final OrganizationService organizationService;
     private final ModelMapper mapper;
 
     @Autowired
-    public MemberController(MemberService memberService, ModelMapper mapper) {
-        this.memberService = memberService;
+    public OrganizationController(OrganizationService organizationService, ModelMapper mapper) {
+        this.organizationService = organizationService;
         this.mapper = mapper;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Member> getMember(
+    public ResponseEntity<Organization> getOrganization(
             @PathVariable("id") String id
     ) throws EntityNotFoundException {
-        return ResponseEntity.ok(memberService.getMember(id));
+        return ResponseEntity.ok(organizationService.getOrganization(id));
     }
 
     @PostMapping
-    public ResponseEntity<Member> insertMember(
-            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException {
-        return ResponseEntity.ok(memberService.insertMember(mapper.map(newMember,Member.class)));
+    public ResponseEntity<Organization> insertOrganization(
+            @RequestBody CreateOrganizationRequest newOrg) {
+        return ResponseEntity.ok(organizationService.insertOrganization(mapper.map(newOrg,Organization.class)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Member> updateMember(
+    public ResponseEntity<Organization> updateOrganization(
             @PathVariable("id") String id,
-            @RequestBody CreateMemberRequest updateMember) throws EntityNotFoundException {
-        return ResponseEntity.ok(memberService.updateMember(id, mapper.map(updateMember, Member.class)));
+            @RequestBody CreateOrganizationRequest updateOrg) throws EntityNotFoundException {
+        return ResponseEntity.ok(organizationService.updateOrganization(id, mapper.map(updateOrg, Organization.class)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteMember(
+    public ResponseEntity deleteOrganization(
             @PathVariable("id") String id
     ) throws EntityNotFoundException {
-        memberService.deleteMember(id);
+        organizationService.deleteOrganization(id);
         return ResponseEntity.ok().build();
     }
 }
