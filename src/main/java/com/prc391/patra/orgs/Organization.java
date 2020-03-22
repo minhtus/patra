@@ -14,4 +14,11 @@ public class Organization {
     @Id
     private String id;
     private String name;
+    private String imageUrl;
+
+    public void mergeForUpdate(Organization org) {
+        this.id = org.id != null? org.id : this.id;
+        this.name = org.name != null? org.name : this.name;
+        this.imageUrl = org.imageUrl != null? org.imageUrl : this.imageUrl;
+    }
 }
