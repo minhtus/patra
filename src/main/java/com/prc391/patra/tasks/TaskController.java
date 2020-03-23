@@ -5,9 +5,11 @@ import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v0/tasks")
@@ -49,5 +51,16 @@ public class TaskController {
     public ResponseEntity deleteTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
         taskService.deleteTask(taskId);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/assignees")
+    public ResponseEntity assignTask(@PathVariable("id") String taskId, @RequestParam List<String> username) {
+        boolean result = taskService.assignToTask(taskId, username);
+        if (result) {
+            return ResponseEntity.ok().build();
+
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

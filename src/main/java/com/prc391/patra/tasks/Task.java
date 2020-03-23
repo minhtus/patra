@@ -12,8 +12,8 @@ public class Task {
     @Id
     private String taskId;
     private String listId;
-    private String creatorUsername;
-    private String[] assigneeUsername;
+    private String reporter;
+    private String[] assignee;
     private String taskName;
     private String taskDescription;
     private String taskDetails;
