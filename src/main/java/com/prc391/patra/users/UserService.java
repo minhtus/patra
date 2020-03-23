@@ -3,7 +3,6 @@ package com.prc391.patra.users;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.users.role.RoleRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,14 +15,12 @@ class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
-    private final ModelMapper mapper;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, ModelMapper mapper) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
-        this.mapper = mapper;
     }
 
     public User registerUser(User newUserInfo) throws EntityExistedException {
@@ -31,12 +28,12 @@ class UserService {
             //throw exception here (if necessary)
             return null;
         }
-        Optional<User> userInDB = userRepository.findById(newUserInfo.getId());
+        Optional<User> userInDB = userRepository.findById(newUserInfo.getUsername());
         if (userInDB.isPresent()) {
-            throw new EntityExistedException("User " + newUserInfo.getId() + " is existed!");
+            throw new EntityExistedException("User " + newUserInfo.getUsername() + " is existed!");
         }
-        User user = mapper.map(newUserInfo, User.class);
-        user.setPassHash(passwordEncoder.encode(newUserInfo.getPassHash()));
+        newUserInfo.setPassHash(passwordEncoder.encode(newUserInfo.getPassHash()));
+        newUserInfo.setEnabled(true);
         //TODO: implement email verification, if possible
 //        user.setEmail(newUserInfo.getEmail());
 
@@ -50,11 +47,10 @@ class UserService {
 //            }
 //        }
 //        user.setRoles(userRoles);
-        return userRepository.save(user);
+        return userRepository.save(newUserInfo);
     }
 
     public User getUser(String username) throws EntityNotFoundException {
-//        return userRepository.getUserByUsername(username);
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
             throw new EntityNotFoundException("User "+ username +" not found");
