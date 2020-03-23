@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class CreateTaskRequest {
     private String listId;
-    private String creatorUsername;
+    private String reporter;
     private String taskName;
     private String taskDescription;
     private String taskDetails;
