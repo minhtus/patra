@@ -1,6 +1,6 @@
 package com.prc391.patra.tasks;
 
-import lombok.*;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
