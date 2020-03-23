@@ -4,6 +4,7 @@ import com.prc391.patra.exceptions.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,5 +42,10 @@ public class TaskService {
         } else {
             throw new EntityNotFoundException();
         }
+    }
+
+    boolean assignToTask(String taskId, List<String> username) {
+        //TODO check user before add
+        return taskRepository.updateAssignee(taskId, username);
     }
 }
