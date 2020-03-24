@@ -11,13 +11,13 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v0/lists")
-public class ListController {
+public class SheetController {
 
     private final ListService listService;
     private final ModelMapper mapper;
 
     @Autowired
-    public ListController(ListService listService, ModelMapper mapper) {
+    public SheetController(ListService listService, ModelMapper mapper) {
         this.listService = listService;
         this.mapper = mapper;
     }
