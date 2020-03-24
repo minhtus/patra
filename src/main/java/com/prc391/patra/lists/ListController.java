@@ -2,10 +2,13 @@ package com.prc391.patra.lists;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.lists.requests.CreateListRequest;
+import com.prc391.patra.tasks.Task;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v0/lists")
@@ -23,6 +26,14 @@ public class ListController {
     @GetMapping("/{id}")
     public ResponseEntity<List> getList(@PathVariable("id") String listId) throws EntityNotFoundException {
         return ResponseEntity.ok(listService.getListById(listId));
+    }
+
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<java.util.List<String>> getTaskFromListId(
+            @PathVariable("id") String listId) throws EntityNotFoundException {
+        //let service return Task in order to use PostAuthorize
+        return ResponseEntity.ok(listService.getTaskFromListId(listId).stream()
+                .map(task -> task.getTaskId()).collect(Collectors.toList()));
     }
 
     @PostMapping
