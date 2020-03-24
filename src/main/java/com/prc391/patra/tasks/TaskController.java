@@ -29,7 +29,7 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) {
+    public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) throws EntityNotFoundException {
         return ResponseEntity.ok(taskService.insertTask(mapper.map(request, Task.class)));
     }
 
