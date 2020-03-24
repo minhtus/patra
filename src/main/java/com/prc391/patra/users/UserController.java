@@ -47,7 +47,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserOrganization(username));
     }
 
-
     //TODO get all lists of user
     //TODO get all task of user
 }
