@@ -24,8 +24,8 @@ public class SwaggerConfig {
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
                 .title("Patra Project's Activites Tracking System")
-                .description("Thống Lý Pá Tra")
-                .version("0.0.0 with GET login")
+                .description("")
+                .version("0.0.1")
                 .contact(new Contact("Group", "https://www.patra.com", "thonglypatra@yahoo.an"))
                 .build();
     }
