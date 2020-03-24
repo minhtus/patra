@@ -1,8 +1,7 @@
-package com.prc391.patra.lists;
+package com.prc391.patra.sheets;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.lists.requests.CreateListRequest;
-import com.prc391.patra.tasks.Task;
+import com.prc391.patra.sheets.requests.CreateListRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.prc391.patra.lists;
+package com.prc391.patra.sheets;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

@@ -1,4 +1,4 @@
-package com.prc391.patra.lists;
+package com.prc391.patra.sheets;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 

@@ -3,7 +3,7 @@ package com.prc391.patra.constant;
 public class ApiPath {
     public static final String API_VER = "/v0";
 
-    public static final String LIST_PATH = API_VER + "/lists";
+    public static final String LIST_PATH = API_VER + "/sheets";
 
     public static final String MEMBER_PATH = API_VER + "/members";
 

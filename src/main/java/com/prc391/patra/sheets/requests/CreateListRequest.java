@@ -1,4 +1,4 @@
-package com.prc391.patra.lists.requests;
+package com.prc391.patra.sheets.requests;
 
 import lombok.Data;
 
