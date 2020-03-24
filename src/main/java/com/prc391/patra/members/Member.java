@@ -14,6 +14,7 @@ public class Member {
     private String orgId;
     private String username;
     private Long[] permissions;
+    private String[] assignedTaskId;
 
     public void mergeToUpdate(Member other) {
         this.memberId = other.memberId != null ? other.memberId :  this.memberId;
