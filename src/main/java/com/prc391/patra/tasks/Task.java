@@ -14,7 +14,7 @@ import java.util.List;
 public class Task {
     @Id
     private String taskId;
-    private String listId;
+    private String sheetId;
     private String reporter;
 //    private String[] assigneeMemberId;
     //Member, not User
