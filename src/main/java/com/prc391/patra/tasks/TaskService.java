@@ -47,7 +47,11 @@ public class TaskService {
         }
     }
 
-    Task insertTask(Task task) {
+    public Task insertTask(Task task) throws EntityNotFoundException {
+        Optional<com.prc391.patra.lists.List> optionalList = listRepository.findById(task.getListId());
+        if (!optionalList.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getListId() + " not exist!");
+        }
         return taskRepository.save(task);
     }
 
