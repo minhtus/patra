@@ -20,8 +20,8 @@ public class SheetService {
         this.taskRepository = taskRepository;
     }
 
-    Sheet getListById(String listId) throws EntityNotFoundException {
-        Optional<Sheet> result = sheetRepository.findById(listId);
+    Sheet getSheetById(String sheetId) throws EntityNotFoundException {
+        Optional<Sheet> result = sheetRepository.findById(sheetId);
         if (result.isPresent()) {
             return result.get();
         } else {
@@ -29,12 +29,12 @@ public class SheetService {
         }
     }
 
-    public List<Task> getTaskFromListId(String listId) throws EntityNotFoundException {
-        Optional<Sheet> result = sheetRepository.findById(listId);
+    public List<Task> getTaskFromSheetId(String sheetId) throws EntityNotFoundException {
+        Optional<Sheet> result = sheetRepository.findById(sheetId);
         if (!result.isPresent()) {
-            throw new EntityNotFoundException("Sheet with id " + listId + " is not exist!");
+            throw new EntityNotFoundException("Sheet with id " + sheetId + " is not exist!");
         }
-        java.util.List<Task> taskList = taskRepository.getAllByListId(listId);
+        List<Task> taskList = taskRepository.getAllBySheetId(sheetId);
         return taskList;
     }
 
@@ -42,8 +42,8 @@ public class SheetService {
         return sheetRepository.save(sheet);
     }
 
-    void deleteList(String listId) {
+    void deleteSheet(String sheetId) {
         //TODO check permission
-        sheetRepository.deleteById(listId);
+        sheetRepository.deleteById(sheetId);
     }
 }
