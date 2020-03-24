@@ -2,10 +2,14 @@ package com.prc391.patra.filter;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
+import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.users.User;
+import com.prc391.patra.users.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,12 +25,18 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class JWTAuthenticationFilter extends GenericFilterBean {
 
+    private final UserRepository userRepository;
     private final Logger logger = Logger.getLogger("JWTAuthenticationFilter");
+
+    public JWTAuthenticationFilter(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -48,10 +58,23 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                 Claims body = claims.getBody();
                 String user = body.getSubject();
                 List<String> authorities = body.get(SecurityConstants.JWT_CLAIMS_AUTHORITY, List.class);
-                String currMemberId = body.get(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, String.class);
+                String currMemberIdInToken = body.get(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, String.class);
+
+                Optional<User> optionalCurrUser = userRepository.findById(user);
+                if (!optionalCurrUser.isPresent()) {
+                    logger.log(Level.SEVERE, "User " + user + " does not exist in db!");
+//                    throw new EntityNotFoundException("User " + user + " does not exist in db!");
+                }
+                String currMemberIdInDb = optionalCurrUser.get().getCurrMemberId();
+                if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInDb)) {
+                    logger.log(Level.INFO, "Current Member's id in DB is updated");
+                    //TODO: revoke token and create new token with new currMemberId
+                    currMemberIdInToken = currMemberIdInDb;
+                }
+
 
                 //passed random password, because the User superclass does not allow null or empty password
-                PatraUserPrincipal principal = new PatraUserPrincipal(user, "a", currMemberId, getGrantedAuthorities(authorities));
+                PatraUserPrincipal principal = new PatraUserPrincipal(user, "a", currMemberIdInToken, getGrantedAuthorities(authorities));
                 return user != null ?
                         new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
             } else {
