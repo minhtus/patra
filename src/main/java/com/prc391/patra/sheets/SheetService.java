@@ -9,12 +9,12 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class ListService {
+public class SheetService {
     private final SheetRepository sheetRepository;
     private final TaskRepository taskRepository;
 
     @Autowired
-    public ListService(SheetRepository sheetRepository, TaskRepository taskRepository) {
+    public SheetService(SheetRepository sheetRepository, TaskRepository taskRepository) {
         this.sheetRepository = sheetRepository;
         this.taskRepository = taskRepository;
     }

@@ -13,36 +13,36 @@ import java.util.stream.Collectors;
 @RequestMapping("/v0/lists")
 public class SheetController {
 
-    private final ListService listService;
+    private final SheetService sheetService;
     private final ModelMapper mapper;
 
     @Autowired
-    public SheetController(ListService listService, ModelMapper mapper) {
-        this.listService = listService;
+    public SheetController(SheetService sheetService, ModelMapper mapper) {
+        this.sheetService = sheetService;
         this.mapper = mapper;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Sheet> getList(@PathVariable("id") String listId) throws EntityNotFoundException {
-        return ResponseEntity.ok(listService.getListById(listId));
+        return ResponseEntity.ok(sheetService.getListById(listId));
     }
 
     @GetMapping("/{id}/tasks")
     public ResponseEntity<java.util.List<String>> getTaskFromListId(
             @PathVariable("id") String listId) throws EntityNotFoundException {
         //let service return Task in order to use PostAuthorize
-        return ResponseEntity.ok(listService.getTaskFromListId(listId).stream()
+        return ResponseEntity.ok(sheetService.getTaskFromListId(listId).stream()
                 .map(task -> task.getTaskId()).collect(Collectors.toList()));
     }
 
     @PostMapping
     public ResponseEntity<Sheet> createList(@RequestBody CreateListRequest request) {
-        return ResponseEntity.ok(listService.insertList(mapper.map(request, Sheet.class)));
+        return ResponseEntity.ok(sheetService.insertList(mapper.map(request, Sheet.class)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteList(@PathVariable("id") String listId) {
-        listService.deleteList(listId);
+        sheetService.deleteList(listId);
         return ResponseEntity.ok().build();
     }
 
