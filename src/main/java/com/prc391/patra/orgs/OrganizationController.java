@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/v0/organization")
+@RequestMapping("/v0/organizations")
 public class OrganizationController {
 
     private final OrganizationService organizationService;
