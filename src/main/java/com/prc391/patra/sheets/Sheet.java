@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 @Data
-public class List {
+public class Sheet {
     @Id
     private String listId;
     private String orgId;

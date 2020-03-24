@@ -23,7 +23,7 @@ public class ListController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<List> getList(@PathVariable("id") String listId) throws EntityNotFoundException {
+    public ResponseEntity<Sheet> getList(@PathVariable("id") String listId) throws EntityNotFoundException {
         return ResponseEntity.ok(listService.getListById(listId));
     }
 
@@ -36,8 +36,8 @@ public class ListController {
     }
 
     @PostMapping
-    public ResponseEntity<List> createList(@RequestBody CreateListRequest request) {
-        return ResponseEntity.ok(listService.insertList(mapper.map(request, List.class)));
+    public ResponseEntity<Sheet> createList(@RequestBody CreateListRequest request) {
+        return ResponseEntity.ok(listService.insertList(mapper.map(request, Sheet.class)));
     }
 
     @DeleteMapping("/{id}")
