@@ -2,11 +2,19 @@ package com.prc391.patra.users;
 
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v0/users")
@@ -33,6 +41,13 @@ public class UserController {
     }
 
     //TODO get all org of user (members) maybe done?
+    @GetMapping("/{username}/organization")
+    public ResponseEntity<List<Organization>> getUserOrganization(
+            @PathVariable("username") String username) throws EntityNotFoundException {
+        return ResponseEntity.ok(userService.getUserOrganization(username));
+    }
+
+
     //TODO get all lists of user
     //TODO get all task of user
 }
