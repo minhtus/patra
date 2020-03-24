@@ -19,8 +19,8 @@ public class ListService {
         this.taskRepository = taskRepository;
     }
 
-    List getListById(String listId) throws EntityNotFoundException {
-        Optional<List> result = listRepository.findById(listId);
+    Sheet getListById(String listId) throws EntityNotFoundException {
+        Optional<Sheet> result = listRepository.findById(listId);
         if (result.isPresent()) {
             return result.get();
         } else {
@@ -29,16 +29,16 @@ public class ListService {
     }
 
     public java.util.List<Task> getTaskFromListId(String listId) throws EntityNotFoundException {
-        Optional<List> result = listRepository.findById(listId);
+        Optional<Sheet> result = listRepository.findById(listId);
         if (!result.isPresent()) {
-            throw new EntityNotFoundException("List with id " + listId + " is not exist!");
+            throw new EntityNotFoundException("Sheet with id " + listId + " is not exist!");
         }
         java.util.List<Task> taskList = taskRepository.getAllByListId(listId);
         return taskList;
     }
 
-    List insertList(List list) {
-        return listRepository.save(list);
+    Sheet insertList(Sheet sheet) {
+        return listRepository.save(sheet);
     }
 
     void deleteList(String listId) {
