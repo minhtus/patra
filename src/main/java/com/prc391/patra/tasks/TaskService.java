@@ -1,13 +1,11 @@
 package com.prc391.patra.tasks;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import io.jsonwebtoken.lang.Collections;
+import com.prc391.patra.members.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PostAuthorize;
-import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,10 +13,12 @@ import java.util.Optional;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final MemberRepository memberRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository) {
         this.taskRepository = taskRepository;
+        this.memberRepository = memberRepository;
     }
 
     //    @PostAuthorize("#Collections.contains(#Arrays.asList(#returnObject.assigneeMemberId), authentication.principal.currMemberId)")
@@ -55,6 +55,7 @@ public class TaskService {
 
     boolean assignToTask(String taskId, List<String> memberIds) {
         //TODO check user before add
-        return taskRepository.updateAssignee(taskId, memberIds);
+        return taskRepository.updateAssignee(taskId, memberIds)
+                && memberRepository.updateAssignedTaskMultipleUser(memberIds, Arrays.asList(taskId));
     }
 }
