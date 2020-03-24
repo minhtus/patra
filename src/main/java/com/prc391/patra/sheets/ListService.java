@@ -10,17 +10,17 @@ import java.util.Optional;
 
 @Service
 public class ListService {
-    private final ListRepository listRepository;
+    private final SheetRepository sheetRepository;
     private final TaskRepository taskRepository;
 
     @Autowired
-    public ListService(ListRepository listRepository, TaskRepository taskRepository) {
-        this.listRepository = listRepository;
+    public ListService(SheetRepository sheetRepository, TaskRepository taskRepository) {
+        this.sheetRepository = sheetRepository;
         this.taskRepository = taskRepository;
     }
 
     Sheet getListById(String listId) throws EntityNotFoundException {
-        Optional<Sheet> result = listRepository.findById(listId);
+        Optional<Sheet> result = sheetRepository.findById(listId);
         if (result.isPresent()) {
             return result.get();
         } else {
@@ -29,7 +29,7 @@ public class ListService {
     }
 
     public java.util.List<Task> getTaskFromListId(String listId) throws EntityNotFoundException {
-        Optional<Sheet> result = listRepository.findById(listId);
+        Optional<Sheet> result = sheetRepository.findById(listId);
         if (!result.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + listId + " is not exist!");
         }
@@ -38,11 +38,11 @@ public class ListService {
     }
 
     Sheet insertList(Sheet sheet) {
-        return listRepository.save(sheet);
+        return sheetRepository.save(sheet);
     }
 
     void deleteList(String listId) {
         //TODO check permission
-        listRepository.deleteById(listId);
+        sheetRepository.deleteById(listId);
     }
 }

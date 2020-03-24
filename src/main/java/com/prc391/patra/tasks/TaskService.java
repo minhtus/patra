@@ -2,7 +2,7 @@ package com.prc391.patra.tasks;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.sheets.ListRepository;
+import com.prc391.patra.sheets.SheetRepository;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.sheets.Sheet;
@@ -23,15 +23,15 @@ import java.util.logging.Logger;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final MemberRepository memberRepository;
-    private final ListRepository listRepository;
+    private final SheetRepository sheetRepository;
 
     private final Logger logger;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, ListRepository listRepository) {
+    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository) {
         this.taskRepository = taskRepository;
         this.memberRepository = memberRepository;
-        this.listRepository = listRepository;
+        this.sheetRepository = sheetRepository;
         this.logger = Logger.getLogger("TaskService");
     }
 
@@ -49,7 +49,7 @@ public class TaskService {
     }
 
     public Task insertTask(Task task) throws EntityNotFoundException {
-        Optional<Sheet> optionalList = listRepository.findById(task.getListId());
+        Optional<Sheet> optionalList = sheetRepository.findById(task.getListId());
         if (!optionalList.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + task.getListId() + " not exist!");
         }
@@ -75,7 +75,7 @@ public class TaskService {
             throws EntityNotFoundException {
         //TODO check user before add
         Task task = this.getByTaskId(taskId);
-        Sheet sheet = listRepository.findById(task.getListId()).get();
+        Sheet sheet = sheetRepository.findById(task.getListId()).get();
         if (ObjectUtils.isEmpty(sheet)) {
             throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
         }
