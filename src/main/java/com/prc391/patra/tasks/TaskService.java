@@ -49,9 +49,9 @@ public class TaskService {
     }
 
     public Task insertTask(Task task) throws EntityNotFoundException {
-        Optional<Sheet> optionalList = sheetRepository.findById(task.getListId());
-        if (!optionalList.isPresent()) {
-            throw new EntityNotFoundException("Sheet with id " + task.getListId() + " not exist!");
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
         }
         return taskRepository.save(task);
     }
@@ -75,7 +75,7 @@ public class TaskService {
             throws EntityNotFoundException {
         //TODO check user before add
         Task task = this.getByTaskId(taskId);
-        Sheet sheet = sheetRepository.findById(task.getListId()).get();
+        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
         if (ObjectUtils.isEmpty(sheet)) {
             throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
         }
