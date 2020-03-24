@@ -2,7 +2,7 @@ package com.prc391.patra.tasks;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.lists.ListRepository;
+import com.prc391.patra.sheets.ListRepository;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +48,7 @@ public class TaskService {
     }
 
     public Task insertTask(Task task) throws EntityNotFoundException {
-        Optional<com.prc391.patra.lists.List> optionalList = listRepository.findById(task.getListId());
+        Optional<com.prc391.patra.sheets.List> optionalList = listRepository.findById(task.getListId());
         if (!optionalList.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + task.getListId() + " not exist!");
         }
@@ -74,7 +74,7 @@ public class TaskService {
             throws EntityNotFoundException {
         //TODO check user before add
         Task task = this.getByTaskId(taskId);
-        com.prc391.patra.lists.List list = listRepository.findById(task.getListId()).get();
+        com.prc391.patra.sheets.List list = listRepository.findById(task.getListId()).get();
         if (ObjectUtils.isEmpty(list)) {
             throw new EntityNotFoundException("Task does not belong to a list??? Check the assignToTask() method in TaskService!");
         }
