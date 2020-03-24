@@ -12,7 +12,7 @@ public class List {
     private String orgId;
     private String listName;
     private String listDescription;
-    private String creatorUsername;
+    private String reporter;
     private boolean privateList;
-    private String[] membersUsername;
+    private String[] assignee;
 }
