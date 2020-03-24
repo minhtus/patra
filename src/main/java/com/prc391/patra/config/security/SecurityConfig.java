@@ -2,6 +2,7 @@ package com.prc391.patra.config.security;
 
 import com.prc391.patra.filter.JWTAuthenticationFilter;
 import com.prc391.patra.filter.JWTLoginFilter;
+import com.prc391.patra.users.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,10 +23,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final DatabaseAuthProvider databaseAuthProvider;
+    private final UserRepository userRepository;
 
     @Autowired
-    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider) {
+    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider, UserRepository userRepository) {
         this.databaseAuthProvider = databaseAuthProvider;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -83,7 +86,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new JWTAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JWTAuthenticationFilter(userRepository), UsernamePasswordAuthenticationFilter.class)
         ;
     }
 

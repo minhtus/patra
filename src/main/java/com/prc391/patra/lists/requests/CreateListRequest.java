@@ -4,7 +4,10 @@ import lombok.Data;
 
 @Data
 public class CreateListRequest {
+    private String orgId;
     private String listName;
     private String listDescription;
-    private String creatorUsername;
+    private String reporter;
+    private boolean privateList;
+
 }
