@@ -6,6 +6,7 @@ import com.prc391.patra.tasks.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,7 +29,7 @@ public class SheetService {
         }
     }
 
-    public java.util.List<Task> getTaskFromListId(String listId) throws EntityNotFoundException {
+    public List<Task> getTaskFromListId(String listId) throws EntityNotFoundException {
         Optional<Sheet> result = sheetRepository.findById(listId);
         if (!result.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + listId + " is not exist!");
@@ -37,7 +38,7 @@ public class SheetService {
         return taskList;
     }
 
-    Sheet insertList(Sheet sheet) {
+    Sheet insertSheet(Sheet sheet) {
         return sheetRepository.save(sheet);
     }
 

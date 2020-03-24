@@ -7,10 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/v0/lists")
+@RequestMapping("/v0/sheets")
 public class SheetController {
 
     private final SheetService sheetService;
@@ -23,26 +24,26 @@ public class SheetController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Sheet> getList(@PathVariable("id") String listId) throws EntityNotFoundException {
-        return ResponseEntity.ok(sheetService.getListById(listId));
+    public ResponseEntity<Sheet> getSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException {
+        return ResponseEntity.ok(sheetService.getListById(sheetId));
     }
 
     @GetMapping("/{id}/tasks")
-    public ResponseEntity<java.util.List<String>> getTaskFromListId(
-            @PathVariable("id") String listId) throws EntityNotFoundException {
+    public ResponseEntity<List<String>> getTaskFromSheetId(
+            @PathVariable("id") String sheetId) throws EntityNotFoundException {
         //let service return Task in order to use PostAuthorize
-        return ResponseEntity.ok(sheetService.getTaskFromListId(listId).stream()
+        return ResponseEntity.ok(sheetService.getTaskFromListId(sheetId).stream()
                 .map(task -> task.getTaskId()).collect(Collectors.toList()));
     }
 
     @PostMapping
-    public ResponseEntity<Sheet> createList(@RequestBody CreateSheetRequest request) {
-        return ResponseEntity.ok(sheetService.insertList(mapper.map(request, Sheet.class)));
+    public ResponseEntity<Sheet> createSheet(@RequestBody CreateSheetRequest request) {
+        return ResponseEntity.ok(sheetService.insertSheet(mapper.map(request, Sheet.class)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteList(@PathVariable("id") String listId) {
-        sheetService.deleteList(listId);
+    public ResponseEntity deleteSheet(@PathVariable("id") String sheetId) {
+        sheetService.deleteList(sheetId);
         return ResponseEntity.ok().build();
     }
 
