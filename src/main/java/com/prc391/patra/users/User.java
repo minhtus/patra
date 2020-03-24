@@ -18,7 +18,7 @@ public class User {
     @JsonIgnore
     private boolean enabled;
 
-    //TODO: redesign the Permission.
+    //do it, official-ed, patch the hole on fish tank with a tape
     private String currMemberId;
 
     //temporary remove Role functionality
