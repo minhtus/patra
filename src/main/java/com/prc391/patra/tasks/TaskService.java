@@ -2,9 +2,10 @@ package com.prc391.patra.tasks;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.lists.ListRepository;
+import com.prc391.patra.sheets.SheetRepository;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
+import com.prc391.patra.sheets.Sheet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,15 +23,15 @@ import java.util.logging.Logger;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final MemberRepository memberRepository;
-    private final ListRepository listRepository;
+    private final SheetRepository sheetRepository;
 
     private final Logger logger;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, ListRepository listRepository) {
+    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository) {
         this.taskRepository = taskRepository;
         this.memberRepository = memberRepository;
-        this.listRepository = listRepository;
+        this.sheetRepository = sheetRepository;
         this.logger = Logger.getLogger("TaskService");
     }
 
@@ -47,7 +48,11 @@ public class TaskService {
         }
     }
 
-    Task insertTask(Task task) {
+    public Task insertTask(Task task) throws EntityNotFoundException {
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
+        }
         return taskRepository.save(task);
     }
 
@@ -70,9 +75,9 @@ public class TaskService {
             throws EntityNotFoundException {
         //TODO check user before add
         Task task = this.getByTaskId(taskId);
-        com.prc391.patra.lists.List list = listRepository.findById(task.getListId()).get();
-        if (ObjectUtils.isEmpty(list)) {
-            throw new EntityNotFoundException("Task does not belong to a list??? Check the assignToTask() method in TaskService!");
+        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+        if (ObjectUtils.isEmpty(sheet)) {
+            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
         }
         //get currentMember's Member entity
         //can't use PreAuthorize and PostAuthorize because the param does not contains
@@ -98,18 +103,18 @@ public class TaskService {
         }
         //end get currMember's Member entity
 
-        //check currMember's orgId vs list's orgId
-        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(list.getOrgId())) {
+        //check currMember's orgId vs sheet's orgId
+        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
             // throw new ForbiddenException()
             logger.log(Level.WARNING, "Current Member's organization_id: "
                     + currMemberOptional.get().getOrgId() +
-                    " is not match with List's organization_id: " + list.getOrgId());
+                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
             return false;
         }
 
         //validate each requestedMemberId:
         // - Member exist
-        // - Member's Organization match with List's Organization
+        // - Member's Organization match with Sheet's Organization
         for (String requestedMemberId : requestedMemberIds) {
             Optional<Member> optionalMember = memberRepository.findById(requestedMemberId);
             //check member exist
@@ -118,11 +123,11 @@ public class TaskService {
             }
             Member requestedMember = optionalMember.get();
             String requestedMemberOrgId = requestedMember.getOrgId();
-            //check member's org match list's org
-            if (!requestedMemberOrgId.equalsIgnoreCase(list.getOrgId())) {
+            //check member's org match sheet's org
+            if (!requestedMemberOrgId.equalsIgnoreCase(sheet.getOrgId())) {
 //                throw new InvalidOrgException("Not valid organization");
                 logger.log(Level.WARNING, "Requested Member's organization_id: " + requestedMemberId +
-                        " is not match with List's organization_id " + list.getOrgId());
+                        " is not match with Sheet's organization_id " + sheet.getOrgId());
                 return false;
             }
 

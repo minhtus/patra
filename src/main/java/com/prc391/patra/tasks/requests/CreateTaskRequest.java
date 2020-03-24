@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class CreateTaskRequest {
-    private String listId;
+    private String sheetId;
     private String reporter;
     private String taskName;
     private String taskDescription;
