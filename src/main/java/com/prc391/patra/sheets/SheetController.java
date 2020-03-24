@@ -1,7 +1,7 @@
 package com.prc391.patra.sheets;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.sheets.requests.CreateListRequest;
+import com.prc391.patra.sheets.requests.CreateSheetRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +36,7 @@ public class SheetController {
     }
 
     @PostMapping
-    public ResponseEntity<Sheet> createList(@RequestBody CreateListRequest request) {
+    public ResponseEntity<Sheet> createList(@RequestBody CreateSheetRequest request) {
         return ResponseEntity.ok(sheetService.insertList(mapper.map(request, Sheet.class)));
     }
 

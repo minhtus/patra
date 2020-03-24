@@ -3,7 +3,7 @@ package com.prc391.patra.sheets.requests;
 import lombok.Data;
 
 @Data
-public class CreateListRequest {
+public class CreateSheetRequest {
     private String orgId;
     private String listName;
     private String listDescription;
