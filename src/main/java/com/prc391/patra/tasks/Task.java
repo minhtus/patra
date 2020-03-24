@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Document
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -12,8 +14,9 @@ public class Task {
     @Id
     private String taskId;
     private String listId;
-    private String reporter;
-    private String[] assignee;
+    private String reporterMemberId;
+//    private String[] assigneeMemberId;
+    private List<String> assigneeMemberId;
     private String taskName;
     private String taskDescription;
     private String taskDetails;
