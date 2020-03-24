@@ -25,14 +25,14 @@ public class SheetController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Sheet> getSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException {
-        return ResponseEntity.ok(sheetService.getListById(sheetId));
+        return ResponseEntity.ok(sheetService.getSheetById(sheetId));
     }
 
     @GetMapping("/{id}/tasks")
     public ResponseEntity<List<String>> getTaskFromSheetId(
             @PathVariable("id") String sheetId) throws EntityNotFoundException {
         //let service return Task in order to use PostAuthorize
-        return ResponseEntity.ok(sheetService.getTaskFromListId(sheetId).stream()
+        return ResponseEntity.ok(sheetService.getTaskFromSheetId(sheetId).stream()
                 .map(task -> task.getTaskId()).collect(Collectors.toList()));
     }
 
@@ -43,7 +43,7 @@ public class SheetController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteSheet(@PathVariable("id") String sheetId) {
-        sheetService.deleteList(sheetId);
+        sheetService.deleteSheet(sheetId);
         return ResponseEntity.ok().build();
     }
 
