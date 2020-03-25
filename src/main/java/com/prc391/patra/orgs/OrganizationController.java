@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/v0/organizations")
 public class OrganizationController {
@@ -34,10 +37,18 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationService.getOrganization(id));
     }
 
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<String>> getAllMemberIdFromOrganizationId(
+            @PathVariable("id") String id) throws EntityNotFoundException {
+        return ResponseEntity.ok(organizationService.getAllMemberFromOrgId(id).stream()
+                .map(member -> member.getMemberId()).collect(Collectors.toList()));
+    }
+
+
     @PostMapping
     public ResponseEntity<Organization> insertOrganization(
             @RequestBody CreateOrganizationRequest newOrg) {
-        return ResponseEntity.ok(organizationService.insertOrganization(mapper.map(newOrg,Organization.class)));
+        return ResponseEntity.ok(organizationService.insertOrganization(mapper.map(newOrg, Organization.class)));
     }
 
     @PutMapping("/{id}")

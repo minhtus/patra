@@ -36,8 +36,9 @@ public class TaskService {
     }
 
     //    @PostAuthorize("#Collections.contains(#Arrays.asList(#returnObject.assigneeMemberId), authentication.principal.currMemberId)")
+    //    @PostFilter(value = "filterObject.assignedMemberId == authentication.principal.currMemberId")
+
     @PostAuthorize("returnObject.assignee.contains(authentication.principal.currMemberId)")
-//    @PostFilter(value = "filterObject.assignedMemberId == authentication.principal.currMemberId")
     Task getByTaskId(String taskId) throws EntityNotFoundException {
         Optional<Task> result = taskRepository.findById(taskId);
         if (result.isPresent()) {
