@@ -1,5 +1,6 @@
 package com.prc391.patra.users;
 
+import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.members.Member;
@@ -8,10 +9,12 @@ import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.role.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,6 +65,14 @@ class UserService {
     }
 
     public User getUser(String username) throws EntityNotFoundException {
+        if (StringUtils.isEmpty(username)) {
+            Object principalObject = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (!(principalObject instanceof PatraUserPrincipal)) {
+                throw new EntityNotFoundException("Something wrong with Principal");
+            }
+            PatraUserPrincipal principal = (PatraUserPrincipal) principalObject;
+            username = principal.getUsername();
+        }
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
             throw new EntityNotFoundException("User "+ username +" not found");
