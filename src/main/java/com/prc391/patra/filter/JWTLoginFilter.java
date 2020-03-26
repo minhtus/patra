@@ -11,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -24,8 +25,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
+
+    private final Logger javaLogger = Logger.getLogger("JWTLoginFilter");
 
     public JWTLoginFilter(String url, AuthenticationManager authManager) {
         super(new AntPathRequestMatcher(url));
@@ -35,9 +40,18 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         String username = request.getParameter("username");
+        String email = request.getParameter("email");
+        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(email)) {
+            javaLogger.log(Level.WARNING, "Login with both username and email at the same time? " +
+                    "Interesting, but we did not have use case for this yet :/ ");
+            return null;
+        }
+
         String password = request.getParameter("password");
+        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, Collections.emptyList(), email, null);
+
         return getAuthenticationManager()
-                .authenticate(new UsernamePasswordAuthenticationToken(username, password, Collections.emptyList()));
+                .authenticate(new UsernamePasswordAuthenticationToken(principal, password, Collections.emptyList()));
     }
 
     @Override

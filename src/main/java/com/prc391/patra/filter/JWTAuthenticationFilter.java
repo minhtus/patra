@@ -74,7 +74,9 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
 
 
                 //passed random password, because the User superclass does not allow null or empty password
-                PatraUserPrincipal principal = new PatraUserPrincipal(user, "a", currMemberIdInToken, getGrantedAuthorities(authorities));
+                PatraUserPrincipal principal =
+                        new PatraUserPrincipal(user, null, getGrantedAuthorities(authorities),
+                                null, currMemberIdInToken);
                 return user != null ?
                         new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
             } else {
