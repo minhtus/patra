@@ -60,13 +60,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList(
-                "GET","POST","PUT","DELETE","PATCH"
+                "GET", "POST", "PUT", "DELETE", "PATCH"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization", "Cache-Control", "Content-type"
         ));
+        configuration.getExposedHeaders();
+        configuration.addExposedHeader("Authorization");
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // put "/**"  in "path" param to allow all,
+        // when auth is fully implemented and used, use "/login" only to allow pre-flight request
+        // when login
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -103,7 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest()
                 .permitAll()
         //uncomment the .authenticated and comment .permitAll to use security
-                //.authenticated()
+        //.authenticated()
 
 //                .and()
 //                .httpBasic()
