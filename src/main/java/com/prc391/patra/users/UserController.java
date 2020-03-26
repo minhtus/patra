@@ -30,9 +30,18 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<User> getUserByUsername(@PathVariable("username") String username) throws EntityNotFoundException {
+    public ResponseEntity<User> getUserByUsername(
+            @PathVariable(value = "username") String username
+    ) throws EntityNotFoundException {
         //TODO get by username or email
         return ResponseEntity.ok(userService.getUser(username));
+    }
+
+    //needed this, otherwise it will call the POST method below
+    @GetMapping
+    public ResponseEntity<User> getUserByUsername() throws EntityNotFoundException {
+        //TODO get by username or email
+        return ResponseEntity.ok(userService.getUser(null));
     }
 
     @PostMapping
