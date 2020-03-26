@@ -66,8 +66,9 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
                 .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + " " + JWT);
         //return the jwt in body
-        response.getWriter().write(SecurityConstants.HEADER_STRING + " " + SecurityConstants.TOKEN_PREFIX + " " + JWT);
-        response.getWriter().flush();
-        response.getWriter().close();
+        //Authorization header is exposed, remove return the jwt in body
+//        response.getWriter().write(SecurityConstants.HEADER_STRING + " " + SecurityConstants.TOKEN_PREFIX + " " + JWT);
+//        response.getWriter().flush();
+//        response.getWriter().close();
     }
 }

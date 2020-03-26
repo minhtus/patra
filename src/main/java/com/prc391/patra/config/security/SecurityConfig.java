@@ -72,7 +72,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // put "/**"  in "path" param to allow all,
         // when auth is fully implemented and used, use "/login" only to allow pre-flight request
         // when login
-        source.registerCorsConfiguration("/login", configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
