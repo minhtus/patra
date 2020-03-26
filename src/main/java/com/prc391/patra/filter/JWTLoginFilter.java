@@ -65,5 +65,9 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
                 .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + " " + JWT);
+        //return the jwt in body
+        response.getWriter().write(SecurityConstants.HEADER_STRING + " " + SecurityConstants.TOKEN_PREFIX + " " + JWT);
+        response.getWriter().flush();
+        response.getWriter().close();
     }
 }
