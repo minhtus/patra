@@ -20,6 +20,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,14 +54,25 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();
+
+        String email = ((PatraUserPrincipal)authentication.getPrincipal()).getEmail();
         String password = authentication.getCredentials().toString();
 
-        User user = userRepository.findById(username).get();
+        //login using username or email
+        User user = null;
+        if (!StringUtils.isEmpty(username)) {
+            user = userRepository.findById(username).get();
+        } else if (!StringUtils.isEmpty(email)) {
+            user = userRepository.getUserByEmail(email);
+        } else {
+            throw new BadCredentialsException("Something wrong here");
+        }
+
 
         //dung config file cho dong thong bao, nhac de khoi quen
         if (user == null) {
             throw new BadCredentialsException
-                    ("(username (or password) not valid message, use config file instead of hardcoding)");
+                    ("(username or email (or password) not valid message, use config file instead of hardcoding)");
         }
         if (!passwordEncoder.matches(password, user.getPassHash())) {
             throw new BadCredentialsException
@@ -74,14 +86,17 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         //Get current working Member, then get the Member's permissions
 
         String currMemberId = user.getCurrMemberId();
-
         Optional<Member> currMember = memberRepository.findById(currMemberId != null ? currMemberId : "");
         if (ObjectUtils.isEmpty(currMember)) {
             //implement working with noOrg here
             //or User did not choose an Org yet
         }
 
-        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, currMemberId, getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions())));
+        //use username and email got from user to build Principal, because passed username/email may be null
+        String loggedInUsername = user.getUsername();
+        String loggedInEmail = user.getEmail();
+        PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
+                getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions())), loggedInEmail,currMemberId);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,

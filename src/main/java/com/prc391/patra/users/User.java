@@ -3,6 +3,7 @@ package com.prc391.patra.users;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
@@ -12,6 +13,7 @@ public class User {
     private String username;
     @JsonIgnore
     private String passHash;
+    @Indexed(unique = true, name = "user_email_index")
     private String email;
     private String name;
 
