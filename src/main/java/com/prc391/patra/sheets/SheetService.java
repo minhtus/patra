@@ -5,6 +5,7 @@ import com.prc391.patra.tasks.Task;
 import com.prc391.patra.tasks.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,14 @@ public class SheetService {
     public SheetService(SheetRepository sheetRepository, TaskRepository taskRepository) {
         this.sheetRepository = sheetRepository;
         this.taskRepository = taskRepository;
+    }
+
+    public List<Sheet> getSheetFromOrgID(String orgID) throws EntityNotFoundException{
+        List<Sheet> result = sheetRepository.getAllByOrgIdIn(orgID);
+        if (CollectionUtils.isEmpty(result)){
+            throw new EntityNotFoundException();
+        }
+        return result;
     }
 
     Sheet getSheetById(String sheetId) throws EntityNotFoundException {
