@@ -2,6 +2,7 @@ package com.prc391.patra.sheets;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.sheets.requests.CreateSheetRequest;
+import com.prc391.patra.tasks.Task;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,17 +24,21 @@ public class SheetController {
         this.mapper = mapper;
     }
 
+    @GetMapping("/byOrg/{id}")
+    public  ResponseEntity<List<Sheet>> getSheetByOrgID(@PathVariable("id") String orgID) throws  EntityNotFoundException{
+        return ResponseEntity.ok(sheetService.getSheetFromOrgID(orgID));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Sheet> getSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException {
         return ResponseEntity.ok(sheetService.getSheetById(sheetId));
     }
 
     @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<String>> getTaskFromSheetId(
+    public ResponseEntity<List<Task>> getTaskFromSheetId(
             @PathVariable("id") String sheetId) throws EntityNotFoundException {
         //let service return Task in order to use PostAuthorize
-        return ResponseEntity.ok(sheetService.getTaskFromSheetId(sheetId).stream()
-                .map(task -> task.getTaskId()).collect(Collectors.toList()));
+        return ResponseEntity.ok(sheetService.getTaskFromSheetId(sheetId));
     }
 
     @PostMapping
