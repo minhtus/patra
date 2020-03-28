@@ -37,7 +37,7 @@ class UserService {
         this.organizationRepository = organizationRepository;
     }
 
-    public User registerUser(User newUserInfo) throws EntityExistedException {
+    public User registerUser(User newUserInfo) throws EntityExistedException, EntityNotFoundException {
         if (ObjectUtils.isEmpty(newUserInfo)) {
             //throw exception here (if necessary)
             return null;
@@ -46,10 +46,17 @@ class UserService {
         if (userInDB.isPresent()) {
             throw new EntityExistedException("User " + newUserInfo.getUsername() + " is existed!");
         }
+//        if (!StringUtils.isEmpty(newUserInfo.getCurrMemberId())) {
+//            if (!StringUtils.isEmpty(newUserInfo.getCurrMemberId().trim())) {
+//                Optional<Member> optionalMember = memberRepository.findById(newUserInfo.getCurrMemberId());
+//                if (!optionalMember.isPresent()) {
+//                    throw new EntityNotFoundException("Member " + newUserInfo.getCurrMemberId() + " is not exist!");
+//                }
+//            }
+//        }
         newUserInfo.setPassHash(passwordEncoder.encode(newUserInfo.getPassHash()));
         newUserInfo.setEnabled(true);
         //TODO: implement email verification, if possible
-//        user.setEmail(newUserInfo.getEmail());
 
 //        List<Long> userRoles = new ArrayList<>();
 //        for (Long roleId : newUserInfo.getRoles()) {
@@ -75,7 +82,7 @@ class UserService {
         }
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User "+ username +" not found");
+            throw new EntityNotFoundException("User " + username + " not found");
         }
         return user.get();
     }
@@ -83,7 +90,7 @@ class UserService {
     public List<Organization> getUserOrganization(String username) throws EntityNotFoundException {
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User "+ username +" not found");
+            throw new EntityNotFoundException("User " + username + " not found");
         }
         List<Member> memberList = memberRepository.getAllByUsername(username);
         List<String> orgIdList = memberList.stream()
