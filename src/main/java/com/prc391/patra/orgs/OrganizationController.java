@@ -1,6 +1,7 @@
 package com.prc391.patra.orgs;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.members.Member;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +39,9 @@ public class OrganizationController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<String>> getAllMemberIdFromOrganizationId(
+    public ResponseEntity<List<Member>> getAllMemberIdFromOrganizationId(
             @PathVariable("id") String id) throws EntityNotFoundException {
-        return ResponseEntity.ok(organizationService.getAllMemberFromOrgId(id).stream()
-                .map(member -> member.getMemberId()).collect(Collectors.toList()));
+        return ResponseEntity.ok(organizationService.getAllMemberFromOrgId(id));
     }
 
 
