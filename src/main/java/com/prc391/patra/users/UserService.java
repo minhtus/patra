@@ -99,7 +99,7 @@ class UserService {
         if (CollectionUtils.isEmpty(orgIdList)) {
             throw new EntityNotFoundException("OrgIds is null");
         }
-        List<Organization> organizationList = organizationRepository.getAllByIdIn(orgIdList);
+        List<Organization> organizationList = organizationRepository.getAllByOrgIdIn(orgIdList);
         if (CollectionUtils.isEmpty(organizationList)) {
             throw new EntityNotFoundException("Org not exist!");
         }
