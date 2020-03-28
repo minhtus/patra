@@ -6,6 +6,9 @@ import lombok.Data;
 public class CreateUserRequest {
     private String username;
     private String password;
+    private String email;
     private String name;
-    private String currMemberId;
+    //newly created user won't have any member id
+    //this field is useless
+//    private String currMemberId;
 }
