@@ -32,7 +32,7 @@ public class S3Service {
         }
     }
 
-    public InputStream download(String resourceUrl) throws IOException {
-        return resourceLoader.getResource(resourceUrl).getInputStream();
+    public InputStream download(String resource) throws IOException {
+        return resourceLoader.getResource(String.format("%s/%s", S3_IMAGES_CONTEXT_URL, resource)).getInputStream();
     }
 }
