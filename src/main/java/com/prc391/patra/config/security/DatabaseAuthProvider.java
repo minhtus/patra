@@ -8,6 +8,7 @@ import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
 import com.prc391.patra.users.role.Role;
 import com.prc391.patra.users.role.RoleRepository;
+import com.prc391.patra.utils.PatraStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -19,14 +20,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 //From JWTLoginFilter to DatabaseAuthProvider
 @Component
@@ -86,22 +89,24 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         //Get current working Member, then get the Member's permissions
 
         String currMemberId = user.getCurrMemberId();
-        Optional<Member> currMember = memberRepository.findById(currMemberId != null ? currMemberId : "");
-        if (ObjectUtils.isEmpty(currMember)) {
-            //implement working with noOrg here
-            //or User did not choose an Org yet
+        Set<GrantedAuthority> authorities = null;
+        if (!PatraStringUtils.isBlankAndEmpty(currMemberId)) {
+            Optional<Member> currMember = memberRepository.findById(currMemberId);
+            if (currMember.isPresent()) {
+                Member member = currMember.get();
+                authorities = (Set<GrantedAuthority>) getAuthoritiesForPermission(Arrays.asList(member.getPermissions()));
+            }
         }
-
         //use username and email got from user to build Principal, because passed username/email may be null
         String loggedInUsername = user.getUsername();
         String loggedInEmail = user.getEmail();
         PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
-                getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions())), loggedInEmail,currMemberId);
+                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail,currMemberId == null ? "" : currMemberId);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 username,
-                getAuthoritiesForPermission(Arrays.asList(currMember.get().getPermissions()))
+                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities
         );
     }
 

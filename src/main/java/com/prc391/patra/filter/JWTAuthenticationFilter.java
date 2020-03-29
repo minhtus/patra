@@ -5,6 +5,7 @@ import com.prc391.patra.config.security.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.utils.PatraStringUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
@@ -15,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;
@@ -58,6 +61,9 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                 Claims body = claims.getBody();
                 String user = body.getSubject();
                 List<String> authorities = body.get(SecurityConstants.JWT_CLAIMS_AUTHORITY, List.class);
+                if (CollectionUtils.isEmpty(authorities)) {
+                    authorities = new ArrayList<>();
+                }
                 String currMemberIdInToken = body.get(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, String.class);
 
                 Optional<User> optionalCurrUser = userRepository.findById(user);
@@ -66,10 +72,12 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
 //                    throw new EntityNotFoundException("User " + user + " does not exist in db!");
                 }
                 String currMemberIdInDb = optionalCurrUser.get().getCurrMemberId();
-                if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInDb)) {
-                    logger.log(Level.INFO, "Current Member's id in DB is updated");
-                    //TODO: revoke token and create new token with new currMemberId
-                    currMemberIdInToken = currMemberIdInDb;
+                if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInToken)) {
+                    if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInDb)) {
+                        logger.log(Level.INFO, "Current Member's id in DB is updated");
+                        //TODO: revoke token and create new token with new currMemberId
+                        currMemberIdInToken = currMemberIdInDb;
+                    }
                 }
 
 
