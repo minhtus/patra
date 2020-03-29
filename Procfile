@@ -1,1 +1,1 @@
-web: java -jar .\build\libs\patra-0.0.1.jar -Dspring.profiles.active=prod
+web: java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar .build/libs/patra-0.0.1.jar
