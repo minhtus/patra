@@ -3,22 +3,24 @@ package com.prc391.patra.users;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.List;
 
 @Document
 @Data
 public class User {
     @Id
-    private String id;
+    private String username;
+    @JsonIgnore
     private String passHash;
+    @Indexed(unique = true, name = "user_email_index")
     private String email;
     private String name;
 
+    @JsonIgnore
     private boolean enabled;
 
-    //TODO: redesign the Permission.
+    //do it, official-ed, patch the hole on fish tank with a tape
     private String currMemberId;
 
     //temporary remove Role functionality

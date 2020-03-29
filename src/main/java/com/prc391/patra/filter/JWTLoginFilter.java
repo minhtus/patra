@@ -1,5 +1,7 @@
 package com.prc391.patra.filter;
 
+import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.config.security.SecurityConstants;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +11,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -22,13 +25,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.prc391.patra.users.TokenAuthenticationService.EXPIRATION_TIME;
-import static com.prc391.patra.users.TokenAuthenticationService.HEADER_STRING;
-import static com.prc391.patra.users.TokenAuthenticationService.SECRET;
-import static com.prc391.patra.users.TokenAuthenticationService.TOKEN_PREFIX;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
+
+    private final Logger javaLogger = Logger.getLogger("JWTLoginFilter");
 
     public JWTLoginFilter(String url, AuthenticationManager authManager) {
         super(new AntPathRequestMatcher(url));
@@ -38,21 +40,27 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         String username = request.getParameter("username");
+        String email = request.getParameter("email");
+        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(email)) {
+            javaLogger.log(Level.WARNING, "Login with both username and email at the same time? " +
+                    "Interesting, but we did not have use case for this yet :/ ");
+            return null;
+        }
+
         String password = request.getParameter("password");
+        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, Collections.emptyList(), email, null);
+
         return getAuthenticationManager()
-                .authenticate(new UsernamePasswordAuthenticationToken(username, password, Collections.emptyList()));
+                .authenticate(new UsernamePasswordAuthenticationToken(principal, password, Collections.emptyList()));
     }
 
     @Override
     protected void successfulAuthentication(
             HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-//        TokenAuthenticationService.addAuthentication(response, authResult.getName());
-//        String authorizationString = response.getHeader("Authorization");
 
-//        String username = authResult.getName();
-        Map<String, Object> currUserPrincipal = (Map<String, Object>) authResult.getPrincipal();
-        String currMemberId = (String) currUserPrincipal.get("currMember");
-        String username = (String) currUserPrincipal.get("username");
+        PatraUserPrincipal principal = (PatraUserPrincipal) authResult.getPrincipal();
+        String username = principal.getUsername();
+        String currMemberId = principal.getCurrMemberId();
         List<SimpleGrantedAuthority> authorities = (List<SimpleGrantedAuthority>) authResult.getAuthorities();
         Set<String> setAuthorities = new HashSet<>();
         for (SimpleGrantedAuthority authority : authorities) {
@@ -63,13 +71,18 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 //            claimsAuthorities.put("authority",authority.getAuthority());
 //        }
 
-        claimsMap.put("authorities", setAuthorities);
-        claimsMap.put("curr_member_id", currMemberId);
+        claimsMap.put(SecurityConstants.JWT_CLAIMS_AUTHORITY, setAuthorities);
+        claimsMap.put(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, currMemberId);
         String JWT = Jwts.builder()
                 .setClaims(claimsMap)
                 .setSubject(username)
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS512, SECRET).compact();
-        response.addHeader(HEADER_STRING, TOKEN_PREFIX + " " + JWT);
+                .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+                .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
+        response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + " " + JWT);
+        //return the jwt in body
+        //Authorization header is exposed, remove return the jwt in body
+//        response.getWriter().write(SecurityConstants.HEADER_STRING + " " + SecurityConstants.TOKEN_PREFIX + " " + JWT);
+//        response.getWriter().flush();
+//        response.getWriter().close();
     }
 }

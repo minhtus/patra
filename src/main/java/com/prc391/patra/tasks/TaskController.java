@@ -5,9 +5,11 @@ import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v0/tasks")
@@ -21,22 +23,13 @@ public class TaskController {
         this.mapper = mapper;
     }
 
-    //use @PreAuthorize to authorize
-    //please wait while I researching @PostAuthorize
-//    @PreAuthorize("hasAuthority('READ')")
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
         return ResponseEntity.ok(taskService.getByTaskId(taskId));
     }
 
-//    @PreAuthorize("hasAnyAuthority('WRITE')")
-//    @GetMapping("/test-write-premission")
-//    public ResponseEntity<String> testPreAuthorize() throws EntityNotFoundException {
-//        return ResponseEntity.ok("You writed!");
-//    }
-
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) {
+    public ResponseEntity<Task> createTask(@RequestBody CreateTaskRequest request) throws EntityNotFoundException {
         return ResponseEntity.ok(taskService.insertTask(mapper.map(request, Task.class)));
     }
 
@@ -49,5 +42,16 @@ public class TaskController {
     public ResponseEntity deleteTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
         taskService.deleteTask(taskId);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/assignees")
+    public ResponseEntity assignTask(@PathVariable("id") String taskId, @RequestParam List<String> memberIds)
+            throws EntityNotFoundException {
+        boolean result = taskService.assignToTask(taskId, memberIds);
+        if (result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
