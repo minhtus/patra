@@ -1,0 +1,19 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  data:
+    mongodb:
+      authentication-database: admin
+      field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
+      database: patra_db
+      uri: mongodb+srv://patra_db_user:CgUnYcYMTO8Sst3f@tunguyen-atlascluster-xyxac.mongodb.net/?retryWrites=true&w=majority
+
+cloud:
+  aws:
+    region:
+      static: us-east-1
+      auto: false
+    stack:
+      auto: false
