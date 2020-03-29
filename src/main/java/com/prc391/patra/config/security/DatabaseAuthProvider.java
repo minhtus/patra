@@ -89,12 +89,12 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         //Get current working Member, then get the Member's permissions
 
         String currMemberId = user.getCurrMemberId();
-        Set<GrantedAuthority> authorities = null;
+        Collection<? extends GrantedAuthority> authorities = null;
         if (!PatraStringUtils.isBlankAndEmpty(currMemberId)) {
             Optional<Member> currMember = memberRepository.findById(currMemberId);
             if (currMember.isPresent()) {
                 Member member = currMember.get();
-                authorities = (Set<GrantedAuthority>) getAuthoritiesForPermission(Arrays.asList(member.getPermissions()));
+                authorities = getAuthoritiesForPermission(Arrays.asList(member.getPermissions()));
             }
         }
         //use username and email got from user to build Principal, because passed username/email may be null
