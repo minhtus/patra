@@ -5,6 +5,8 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Document
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -14,7 +16,7 @@ public class Member {
     private String orgId;
     private String username;
     private Long[] permissions;
-    private String[] assignedTaskId;
+    private List<String> assignedTaskId;
 
     public void mergeToUpdate(Member other) {
         this.memberId = other.memberId != null ? other.memberId :  this.memberId;

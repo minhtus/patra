@@ -2,7 +2,6 @@ package com.prc391.patra.filter;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
-import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.utils.PatraStringUtils;
@@ -10,14 +9,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;

@@ -58,13 +58,16 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();
 
-        String email = ((PatraUserPrincipal)authentication.getPrincipal()).getEmail();
+        String email = ((PatraUserPrincipal) authentication.getPrincipal()).getEmail();
         String password = authentication.getCredentials().toString();
 
         //login using username or email
         User user = null;
         if (!StringUtils.isEmpty(username)) {
-            user = userRepository.findById(username).get();
+            Optional<User> optionalUser = userRepository.findById(username);
+            if (optionalUser.isPresent()) {
+                user = optionalUser.get();
+            }
         } else if (!StringUtils.isEmpty(email)) {
             user = userRepository.getUserByEmail(email);
         } else {
@@ -101,7 +104,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String loggedInUsername = user.getUsername();
         String loggedInEmail = user.getEmail();
         PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
-                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail,currMemberId == null ? "" : currMemberId);
+                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail, currMemberId == null ? "" : currMemberId);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,

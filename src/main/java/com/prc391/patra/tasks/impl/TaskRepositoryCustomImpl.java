@@ -24,6 +24,14 @@ public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
     public boolean updateAssignee(String taskId, List<String> memberIds) {
         UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
                 new Update().addToSet("assignee").each(memberIds), Task.class);
+
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
+    }
+
+    @Override
+    public boolean removeAssignee(String taskId, List<String> memberIds) {
+        UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
+                new Update().pullAll("assignee", memberIds.toArray()), Task.class);
         return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
 }

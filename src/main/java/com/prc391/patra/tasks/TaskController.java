@@ -45,7 +45,8 @@ public class TaskController {
     }
 
     @PatchMapping("/{id}/assignees")
-    public ResponseEntity assignTask(@PathVariable("id") String taskId, @RequestParam List<String> memberIds)
+    public ResponseEntity assignTask(@PathVariable("id") String taskId,
+                                     @RequestParam(required = false) List<String> memberIds)
             throws EntityNotFoundException {
         boolean result = taskService.assignToTask(taskId, memberIds);
         if (result) {
@@ -53,5 +54,24 @@ public class TaskController {
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+//    @PatchMapping("/{id}/unassign-assignees")
+//    public ResponseEntity unassignTask(
+//            @PathVariable("id") String taskId,
+//            @RequestParam List<String> memberIds)
+//            throws EntityNotFoundException {
+//        boolean result = taskService.unassignToTask(taskId, memberIds);
+//        if (result) {
+//            return ResponseEntity.ok().build();
+//        } else {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
+
+    //TODO: delete this after development
+    @GetMapping
+    public ResponseEntity getAllTask() {
+        return ResponseEntity.ok(taskService.getAllTask());
     }
 }
