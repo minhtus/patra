@@ -9,10 +9,15 @@ spring:
       field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
       database: patra_db
       uri: mongodb://localhost:27017
+  redis:
+#    host: patra-redis-001.654bjn.0001.use1.cache.amazonaws.com
+    host: ec2-34-200-253-130.compute-1.amazonaws.com
+    port: 6379
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
 
 cloud:
   aws:

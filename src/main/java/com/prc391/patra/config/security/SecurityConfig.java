@@ -2,6 +2,7 @@ package com.prc391.patra.config.security;
 
 import com.prc391.patra.filter.JWTAuthenticationFilter;
 import com.prc391.patra.filter.JWTLoginFilter;
+import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,11 +31,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final DatabaseAuthProvider databaseAuthProvider;
     private final UserRepository userRepository;
+    private final UserRedisRepository userRedisRepository;
 
     @Autowired
-    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider, UserRepository userRepository) {
+    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider, UserRepository userRepository, UserRedisRepository userRedisRepository) {
         this.databaseAuthProvider = databaseAuthProvider;
         this.userRepository = userRepository;
+        this.userRedisRepository = userRedisRepository;
     }
 
     /**
@@ -121,9 +124,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new JWTAuthenticationFilter(userRepository), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JWTAuthenticationFilter(userRepository, userRedisRepository), UsernamePasswordAuthenticationFilter.class)
         ;
-
         http.logout()
 //                .logoutSuccessUrl("/logout")
                 .logoutUrl("/logout")

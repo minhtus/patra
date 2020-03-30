@@ -3,12 +3,15 @@ package com.prc391.patra.config.security;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.users.User;
+import com.prc391.patra.users.UserRedis;
+import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
 import com.prc391.patra.users.role.Role;
 import com.prc391.patra.users.role.RoleRepository;
 import com.prc391.patra.utils.PatraStringUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,6 +24,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -45,12 +49,18 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final UserRedisRepository userRedisRepository;
+
+    private final ModelMapper mapper;
+
     @Autowired
-    public DatabaseAuthProvider(UserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, MemberRepository memberRepository) {
+    public DatabaseAuthProvider(UserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, MemberRepository memberRepository, UserRedisRepository userRedisRepository, ModelMapper mapper) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.memberRepository = memberRepository;
+        this.userRedisRepository = userRedisRepository;
+        this.mapper = mapper;
         this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
@@ -90,6 +100,10 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         }
 
         //Get current working Member, then get the Member's permissions
+
+        userRedisRepository.deleteById(username);
+        UserRedis userRedis = mapper.map(user, UserRedis.class);
+        userRedisRepository.save(userRedis);
 
         String currMemberId = user.getCurrMemberId();
         Collection<? extends GrantedAuthority> authorities = null;
