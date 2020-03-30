@@ -6,15 +6,11 @@ import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v0/members")
@@ -34,6 +30,13 @@ public class MemberController {
             @PathVariable("id") String id
     ) throws EntityNotFoundException {
         return ResponseEntity.ok(memberService.getMember(id));
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<Member>> getMultiMember(
+            @RequestParam List<String> memberIDs
+    ) throws EntityNotFoundException {
+        return ResponseEntity.ok(memberService.getMultiMember(memberIDs));
     }
 
     @PostMapping
