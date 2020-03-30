@@ -99,6 +99,9 @@ public class TaskService {
         if (ObjectUtils.isEmpty(sheet)) {
             throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
         }
+        if (CollectionUtils.isEmpty(requestedMemberIds)) {
+            requestedMemberIds = new ArrayList<>();
+        }
         //get currentMember's Member entity
         //can't use PreAuthorize and PostAuthorize because the param does not contains
         //org info, the return value is boolean which does not contain org info,
@@ -155,86 +158,93 @@ public class TaskService {
             //no need to check
         }
         //two way embedded, update two documents at the same time
-        return taskRepository.updateAssignee(taskId, requestedMemberIds)
-                && memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
+        //remove all old assign information
+        List<String> oldAssigneeIds = task.getAssignee();
+        //remove all old assigneeList on Task
+        boolean taskResult = taskRepository.removeAssignee(taskId, oldAssigneeIds);
+        //remove all old assigned Task on old assigneeList
+        boolean memberResult = memberRepository.removeAssignedTask(oldAssigneeIds, Arrays.asList(taskId));
+        taskRepository.updateAssignee(taskId, requestedMemberIds);
+        memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
+        return taskResult && memberResult;
     }
 
-    boolean unassignToTask(String taskId, List<String> requestedMemberIds) throws EntityNotFoundException {
-        Task task = this.getByTaskId(taskId);
-        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
-        if (ObjectUtils.isEmpty(sheet)) {
-            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
-        }
-
-        //test member's permission before unassigning
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (ObjectUtils.isEmpty(authentication)) {
-            //less likely to happen
-            logger.log(Level.WARNING, "Authentication is empty");
-            return false;
-        }
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof PatraUserPrincipal)) {
-            logger.log(Level.WARNING, "AnonymousUser!");
-            return false;
-        }
-        Optional<Member> currMemberOptional = memberRepository.findById(((PatraUserPrincipal) authentication.getPrincipal()).getCurrMemberId());
-        if (!currMemberOptional.isPresent()) {
-            logger.log(Level.WARNING, "Current member does not exist in db!");
-            throw new EntityNotFoundException("Current member does not exist in db!");
-
-        }
-
-        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
-            // throw new ForbiddenException()
-            logger.log(Level.WARNING, "Current Member's organization_id: "
-                    + currMemberOptional.get().getOrgId() +
-                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
-            return false;
-        }
-        //end checking member's permission
-
-        //check if task does have any assignee
-        if (CollectionUtils.isEmpty(task.getAssignee())) {
-            throw new EntityNotFoundException("Task " + taskId + " does not have any assignee!");
-        }
-        //use this list to ignore requestedMemberIds that do not assigned to Task.
-        // Add not-assigned memberIds into this list and remove from requestedMemberIds at the end of the loop
-        List<String> invalidAssigneeId = new ArrayList<>();
-
-        //validate each requestedMemberId:
-        // - Member exist
-        // - Member's id is exist in Task, Task's id is exist in Member
-        for (String requestedMemberId : requestedMemberIds) {
-            Optional<Member> optionalMember = memberRepository.findById(requestedMemberId);
-            //check member exist
-            if (!optionalMember.isPresent()) {
-                throw new EntityNotFoundException("Member with id " + requestedMemberId + " not exist!");
-            }
-            Member member = optionalMember.get();
-            //check if member is assigned to any task
-            if (CollectionUtils.isEmpty(member.getAssignedTaskId())) {
-//                throw new EntityNotFoundException("Member " + requestedMemberId + " is not assigned to any task!");
-                logger.log(Level.INFO,"Member " + requestedMemberId + " is not assigned to any task!");
-
-            }
-            if (!member.getAssignedTaskId().contains(taskId)) {
-//                throw new EntityNotFoundException("Member with id " + requestedMemberId +
+//    boolean unassignToTask(String taskId, List<String> requestedMemberIds) throws EntityNotFoundException {
+//        Task task = this.getByTaskId(taskId);
+//        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+//        if (ObjectUtils.isEmpty(sheet)) {
+//            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
+//        }
+//
+//        //test member's permission before unassigning
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        if (ObjectUtils.isEmpty(authentication)) {
+//            //less likely to happen
+//            logger.log(Level.WARNING, "Authentication is empty");
+//            return false;
+//        }
+//        Object principal = authentication.getPrincipal();
+//        if (!(principal instanceof PatraUserPrincipal)) {
+//            logger.log(Level.WARNING, "AnonymousUser!");
+//            return false;
+//        }
+//        Optional<Member> currMemberOptional = memberRepository.findById(((PatraUserPrincipal) authentication.getPrincipal()).getCurrMemberId());
+//        if (!currMemberOptional.isPresent()) {
+//            logger.log(Level.WARNING, "Current member does not exist in db!");
+//            throw new EntityNotFoundException("Current member does not exist in db!");
+//
+//        }
+//
+//        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
+//            // throw new ForbiddenException()
+//            logger.log(Level.WARNING, "Current Member's organization_id: "
+//                    + currMemberOptional.get().getOrgId() +
+//                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
+//            return false;
+//        }
+//        //end checking member's permission
+//
+//        //check if task does have any assignee
+//        if (CollectionUtils.isEmpty(task.getAssignee())) {
+//            throw new EntityNotFoundException("Task " + taskId + " does not have any assignee!");
+//        }
+//        //use this list to ignore requestedMemberIds that do not assigned to Task.
+//        // Add not-assigned memberIds into this list and remove from requestedMemberIds at the end of the loop
+//        List<String> invalidAssigneeId = new ArrayList<>();
+//
+//        //validate each requestedMemberId:
+//        // - Member exist
+//        // - Member's id is exist in Task, Task's id is exist in Member
+//        for (String requestedMemberId : requestedMemberIds) {
+//            Optional<Member> optionalMember = memberRepository.findById(requestedMemberId);
+//            //check member exist
+//            if (!optionalMember.isPresent()) {
+//                throw new EntityNotFoundException("Member with id " + requestedMemberId + " not exist!");
+//            }
+//            Member member = optionalMember.get();
+//            //check if member is assigned to any task
+//            if (CollectionUtils.isEmpty(member.getAssignedTaskId())) {
+////                throw new EntityNotFoundException("Member " + requestedMemberId + " is not assigned to any task!");
+//                logger.log(Level.INFO, "Member " + requestedMemberId + " is not assigned to any task!");
+//
+//            }
+//            if (!member.getAssignedTaskId().contains(taskId)) {
+////                throw new EntityNotFoundException("Member with id " + requestedMemberId +
+////                        " doesn't have task " + taskId);
+//                logger.log(Level.INFO, "Member with id " + requestedMemberId +
 //                        " doesn't have task " + taskId);
-                logger.log(Level.INFO, "Member with id " + requestedMemberId +
-                        " doesn't have task " + taskId);
-                invalidAssigneeId.add(requestedMemberId);
-            }
-
-            if (!task.getAssignee().contains(requestedMemberId)) {
-//                throw new EntityNotFoundException("Task " + taskId + " does not assigned to member " + requestedMemberId);
-                logger.log(Level.INFO, "Task " + taskId + " does not assigned to member " + requestedMemberId);
-                if (!invalidAssigneeId.contains(requestedMemberId))
-                    invalidAssigneeId.add(requestedMemberId);
-            }
-        }
-        requestedMemberIds.removeAll(invalidAssigneeId);
-        return taskRepository.removeAssignee(taskId, requestedMemberIds) &&
-                memberRepository.removeAssignedTask(requestedMemberIds, Arrays.asList(taskId));
-    }
+//                invalidAssigneeId.add(requestedMemberId);
+//            }
+//
+//            if (!task.getAssignee().contains(requestedMemberId)) {
+////                throw new EntityNotFoundException("Task " + taskId + " does not assigned to member " + requestedMemberId);
+//                logger.log(Level.INFO, "Task " + taskId + " does not assigned to member " + requestedMemberId);
+//                if (!invalidAssigneeId.contains(requestedMemberId))
+//                    invalidAssigneeId.add(requestedMemberId);
+//            }
+//        }
+//        requestedMemberIds.removeAll(invalidAssigneeId);
+//        return taskRepository.removeAssignee(taskId, requestedMemberIds) &&
+//                memberRepository.removeAssignedTask(requestedMemberIds, Arrays.asList(taskId));
+//    }
 }
