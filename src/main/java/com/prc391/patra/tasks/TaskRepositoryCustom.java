@@ -4,4 +4,5 @@ import java.util.List;
 
 public interface TaskRepositoryCustom {
     boolean updateAssignee(String taskId, List<String> memberIds);
+    boolean removeAssignee(String taskId, List<String> memberIds);
 }
