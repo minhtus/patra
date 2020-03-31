@@ -81,7 +81,7 @@ class UserService {
         }
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User "+ username +" not found");
+            throw new EntityNotFoundException("User " + username + " not found");
         }
         return user.get();
     }
@@ -89,7 +89,7 @@ class UserService {
     public List<Organization> getUserOrganization(String username) throws EntityNotFoundException {
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User "+ username +" not found");
+            throw new EntityNotFoundException("User " + username + " not found");
         }
         List<Member> memberList = memberRepository.getAllByUsername(username);
         List<String> orgIdList = memberList.stream()
@@ -108,7 +108,7 @@ class UserService {
     public void updateCurrMemberId(String username, String currMemberId) throws EntityNotFoundException, InvalidInputException {
         Optional<User> optionalUser = userRepository.findById(username);
         if (!optionalUser.isPresent()) {
-            throw new EntityNotFoundException("User "+ username +" not found");
+            throw new EntityNotFoundException("User " + username + " not found");
         }
         User user = optionalUser.get();
         if (user.getCurrMemberId().equalsIgnoreCase(currMemberId)) {
@@ -119,6 +119,7 @@ class UserService {
             throw new EntityNotFoundException("Member " + currMemberId + " is not exist");
         }
         user.setCurrMemberId(currMemberId);
+        //change curr-member-id, overall memberIds of user is not changed
         userRedisRepository.deleteById(username);
         UserRedis userRedis = mapper.map(user, UserRedis.class);
         userRedisRepository.save(userRedis);

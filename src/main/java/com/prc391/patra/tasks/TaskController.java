@@ -5,6 +5,7 @@ import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,18 +57,11 @@ public class TaskController {
         }
     }
 
-//    @PatchMapping("/{id}/unassign-assignees")
-//    public ResponseEntity unassignTask(
-//            @PathVariable("id") String taskId,
-//            @RequestParam List<String> memberIds)
-//            throws EntityNotFoundException {
-//        boolean result = taskService.unassignToTask(taskId, memberIds);
-//        if (result) {
-//            return ResponseEntity.ok().build();
-//        } else {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//    }
+    @PatchMapping("/{id}/status")
+    public ResponseEntity setTaskStatus(@PathVariable("id") String taskId,
+                                     @RequestParam RefTaskStatus status) {
+        return ResponseEntity.ok().build();
+    }
 
     //TODO: delete this after development
     @GetMapping

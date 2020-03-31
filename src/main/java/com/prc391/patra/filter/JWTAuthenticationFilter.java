@@ -34,12 +34,12 @@ import java.util.logging.Logger;
 public class JWTAuthenticationFilter extends GenericFilterBean {
 
     private final UserRepository userRepository;
-    private final UserRedisRepository userRedisRepository;
+//    private final UserRedisRepository userRedisRepository;
     private final Logger logger = Logger.getLogger("JWTAuthenticationFilter");
 
     public JWTAuthenticationFilter(UserRepository userRepository, UserRedisRepository userRedisRepository) {
         this.userRepository = userRepository;
-        this.userRedisRepository = userRedisRepository;
+//        this.userRedisRepository = userRedisRepository;
     }
 
     @Override
@@ -67,40 +67,40 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                 }
                 String currMemberIdInToken = body.get(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, String.class);
 
-                //Get user in redis and check its' current member id, because when currMemId in db is changed,
-                //currMemId in redis would change too
-                Optional<UserRedis> currentUserInRedisOpt = userRedisRepository.findById(username);
-                String currMemberIdInRedis;
-                List<String> memberIdsInRedis = new ArrayList<>();
-                if (currentUserInRedisOpt.isPresent()) {
-                    logger.log(Level.INFO, "User " + username + " in redis is exist.");
-                    UserRedis userRedis = currentUserInRedisOpt.get();
-                    currMemberIdInRedis = userRedis.getCurrMemberId();
-                    memberIdsInRedis = userRedis.getMemberIds();
-                } else {
-                    //hope this condition won't happen
-                    logger.log(Level.INFO, "User in redis is not exist.");
-                    Optional<User> optionalCurrUser = userRepository.findById(username);
-                    if (!optionalCurrUser.isPresent()) {
-                        logger.log(Level.SEVERE, "User " + username + " does not exist in db!");
-                        return null;
-//                        throw new EntityNotFoundException("User " + username + " does not exist in db!");
-                    }
-                    currMemberIdInRedis = optionalCurrUser.get().getCurrMemberId();
-                }
-
-                if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInToken)
-                        && !PatraStringUtils.isBlankAndEmpty(currMemberIdInRedis)) {
-                    if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInRedis)) {
-                        logger.log(Level.INFO, "Current Member's id in redis is updated");
-                        //TODO: revoke token and create new token with new currMemberId
-                        currMemberIdInToken = currMemberIdInRedis;
-                    }
-                }
+//                //Get user in redis and check its' current member id, because when currMemId in db is changed,
+//                //currMemId in redis would change too
+//                Optional<UserRedis> currentUserInRedisOpt = userRedisRepository.findById(username);
+//                String currMemberIdInRedis;
+//                List<String> memberIdsInRedis = new ArrayList<>();
+//                if (currentUserInRedisOpt.isPresent()) {
+//                    logger.log(Level.INFO, "User " + username + " in redis is exist.");
+//                    UserRedis userRedis = currentUserInRedisOpt.get();
+//                    currMemberIdInRedis = userRedis.getCurrMemberId();
+//                    memberIdsInRedis = userRedis.getMemberIds();
+//                } else {
+//                    //hope this condition won't happen
+//                    logger.log(Level.INFO, "User in redis is not exist.");
+//                    Optional<User> optionalCurrUser = userRepository.findById(username);
+//                    if (!optionalCurrUser.isPresent()) {
+//                        logger.log(Level.SEVERE, "User " + username + " does not exist in db!");
+//                        return null;
+////                        throw new EntityNotFoundException("User " + username + " does not exist in db!");
+//                    }
+//                    currMemberIdInRedis = optionalCurrUser.get().getCurrMemberId();
+//                }
+//
+//                if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInToken)
+//                        && !PatraStringUtils.isBlankAndEmpty(currMemberIdInRedis)) {
+//                    if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInRedis)) {
+//                        logger.log(Level.INFO, "Current Member's id in redis is updated");
+//                        //TODO: revoke token and create new token with new currMemberId
+//                        currMemberIdInToken = currMemberIdInRedis;
+//                    }
+//                }
 
                 PatraUserPrincipal principal =
                         new PatraUserPrincipal(username, null, getGrantedAuthorities(authorities),
-                                null, currMemberIdInToken, memberIdsInRedis);
+                                null, currMemberIdInToken, null);
                 return username != null ?
                         new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
             } else {
