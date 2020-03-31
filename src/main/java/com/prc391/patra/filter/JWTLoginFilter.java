@@ -48,7 +48,7 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
         }
 
         String password = request.getParameter("password");
-        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, Collections.emptyList(), email, null);
+        PatraUserPrincipal principal = new PatraUserPrincipal(username, password, Collections.emptyList(), email, null, null);
 
         return getAuthenticationManager()
                 .authenticate(new UsernamePasswordAuthenticationToken(principal, password, Collections.emptyList()));
@@ -60,6 +60,7 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 
         PatraUserPrincipal principal = (PatraUserPrincipal) authResult.getPrincipal();
         String username = principal.getUsername();
+//        List<String> currMemberId = principal.getMemberIds();
         String currMemberId = principal.getCurrMemberId();
         List<SimpleGrantedAuthority> authorities = (List<SimpleGrantedAuthority>) authResult.getAuthorities();
         Set<String> setAuthorities = new HashSet<>();

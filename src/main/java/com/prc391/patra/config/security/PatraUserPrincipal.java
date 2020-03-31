@@ -3,7 +3,6 @@ package com.prc391.patra.config.security;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 
@@ -11,6 +10,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -41,10 +41,11 @@ public class PatraUserPrincipal implements UserDetails {
     private final boolean credentialsNonExpired;
     private final boolean isEnabled;
     private final String currMemberId;
+    private final List<String> memberIds;
 
     private final String email;
 
-    public PatraUserPrincipal(String username, String password, Collection<? extends GrantedAuthority> authorities, String email, String currMemberId) {
+    public PatraUserPrincipal(String username, String password, Collection<? extends GrantedAuthority> authorities, String email, String currMemberId, List<String> memberIds) {
         this.username = username;
         this.password = password;
         this.accountNonExpired = true;
@@ -54,6 +55,7 @@ public class PatraUserPrincipal implements UserDetails {
         this.grantedAuthorities = Collections.unmodifiableSet(sortAuthorities(authorities));;
         this.email = email;
         this.currMemberId = currMemberId;
+        this.memberIds = memberIds;
     }
 //
 //    public PatraUserPrincipal(String username, String password, String currMemberId, Collection<? extends GrantedAuthority> authorities) {

@@ -71,10 +71,12 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                 //currMemId in redis would change too
                 Optional<UserRedis> currentUserInRedisOpt = userRedisRepository.findById(username);
                 String currMemberIdInRedis;
+                List<String> memberIdsInRedis = new ArrayList<>();
                 if (currentUserInRedisOpt.isPresent()) {
-                    logger.log(Level.INFO, "User in redis is exist.");
+                    logger.log(Level.INFO, "User " + username + " in redis is exist.");
                     UserRedis userRedis = currentUserInRedisOpt.get();
                     currMemberIdInRedis = userRedis.getCurrMemberId();
+                    memberIdsInRedis = userRedis.getMemberIds();
                 } else {
                     //hope this condition won't happen
                     logger.log(Level.INFO, "User in redis is not exist.");
@@ -96,10 +98,9 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                     }
                 }
 
-
                 PatraUserPrincipal principal =
                         new PatraUserPrincipal(username, null, getGrantedAuthorities(authorities),
-                                null, currMemberIdInToken);
+                                null, currMemberIdInToken, memberIdsInRedis);
                 return username != null ?
                         new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
             } else {

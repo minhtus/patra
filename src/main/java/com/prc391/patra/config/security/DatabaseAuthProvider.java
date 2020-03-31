@@ -29,9 +29,11 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 //From JWTLoginFilter to DatabaseAuthProvider
 @Component
@@ -99,10 +101,16 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
         //Get current working Member, then get the Member's permissions
 
-        userRedisRepository.deleteById(username);
+        //save user into redis
+        userRedisRepository.deleteById(user.getUsername());
         UserRedis userRedis = mapper.map(user, UserRedis.class);
+        //get all member ids
+        List<String> memberIds = memberRepository.getAllByUsername(user.getUsername()).stream()
+                .map(member -> member.getMemberId()).collect(Collectors.toList());
+        userRedis.setMemberIds(memberIds);
+//        List<Member> memberList = memberRepository.getAllByUsername(user.getUsername());
+//        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
         userRedisRepository.save(userRedis);
-
         String currMemberId = user.getCurrMemberId();
         Collection<? extends GrantedAuthority> authorities = null;
         if (!PatraStringUtils.isBlankAndEmpty(currMemberId)) {
@@ -112,11 +120,13 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
                 authorities = getAuthoritiesForPermission(Arrays.asList(member.getPermissions()));
             }
         }
+//        authorities = new HashSet<>();
         //use username and email got from user to build Principal, because passed username/email may be null
         String loggedInUsername = user.getUsername();
         String loggedInEmail = user.getEmail();
         PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
-                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail, currMemberId == null ? "" : currMemberId);
+                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail
+                , currMemberId == null ? "" : currMemberId, memberIds == null ? new ArrayList<>() : memberIds);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,
