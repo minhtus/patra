@@ -81,7 +81,7 @@ class UserService {
         }
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User " + username + " not found");
+            throw new EntityNotFoundException("User "+ username +" not found");
         }
         return user.get();
     }
@@ -89,7 +89,7 @@ class UserService {
     public List<Organization> getUserOrganization(String username) throws EntityNotFoundException {
         Optional<User> user = userRepository.findById(username);
         if (!user.isPresent()) {
-            throw new EntityNotFoundException("User " + username + " not found");
+            throw new EntityNotFoundException("User "+ username +" not found");
         }
         List<Member> memberList = memberRepository.getAllByUsername(username);
         List<String> orgIdList = memberList.stream()
