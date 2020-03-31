@@ -6,8 +6,7 @@ public class SecurityConstants {
     public static final String JWT_CLAIMS_CURR_MEMBER_ID = "curr_member_id";
 
     //jwt information
-    //for testing only
-    public static final long EXPIRATION_TIME = 600 * 1000;//10 minutes
+    public static final long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000;//1 week
 
     public static final String SECRET = "ThisIsASecret";
 

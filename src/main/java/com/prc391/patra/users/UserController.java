@@ -2,16 +2,20 @@ package com.prc391.patra.users;
 
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.InvalidInputException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -45,7 +49,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> registerUser(@RequestBody CreateUserRequest request) throws EntityExistedException, EntityNotFoundException {
+    public ResponseEntity<User> registerUser(@RequestBody CreateUserRequest request) throws EntityExistedException {
         User user = mapper.map(request, User.class);
         user.setPassHash(request.getPassword());
         return ResponseEntity.ok(userService.registerUser(user));
@@ -56,6 +60,15 @@ public class UserController {
     public ResponseEntity<List<Organization>> getUserOrganization(
             @PathVariable("username") String username) throws EntityNotFoundException {
         return ResponseEntity.ok(userService.getUserOrganization(username));
+    }
+
+    @PatchMapping("/{username}/curr-member")
+    public ResponseEntity updateCurrMemberId(
+            @PathVariable("username") String username,
+            @RequestParam("currMember") String currMemberId
+    ) throws EntityNotFoundException, InvalidInputException {
+        userService.updateCurrMemberId(username, currMemberId);
+        return ResponseEntity.ok().build();
     }
 
     //TODO get all lists of user
