@@ -9,6 +9,7 @@ import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Arrays;
@@ -38,6 +39,15 @@ public class MemberService {
         }
 
         return optionalMember.get();
+    }
+
+    public List<Member> getMultiMember(List<String> memberIds) throws EntityNotFoundException {
+        List<Member> optionalMember = (List<Member>) memberRepository.findAllById(memberIds);
+        if (CollectionUtils.isEmpty((optionalMember))) {
+            throw new EntityNotFoundException();
+        }
+
+        return optionalMember;
     }
 
     public Member insertMember(Member newMember) throws EntityNotFoundException {
