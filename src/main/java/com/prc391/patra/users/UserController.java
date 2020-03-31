@@ -50,7 +50,9 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> registerUser(@RequestBody CreateUserRequest request) throws EntityExistedException {
-        return ResponseEntity.ok(userService.registerUser(mapper.map(request, User.class)));
+        User user = mapper.map(request, User.class);
+        user.setPassHash(request.getPassword());
+        return ResponseEntity.ok(userService.registerUser(user));
     }
 
     //TODO get all org of user (members) maybe done?

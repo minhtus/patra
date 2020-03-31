@@ -81,12 +81,14 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                     Optional<User> optionalCurrUser = userRepository.findById(username);
                     if (!optionalCurrUser.isPresent()) {
                         logger.log(Level.SEVERE, "User " + username + " does not exist in db!");
-//                    throw new EntityNotFoundException("User " + username + " does not exist in db!");
+                        return null;
+//                        throw new EntityNotFoundException("User " + username + " does not exist in db!");
                     }
                     currMemberIdInRedis = optionalCurrUser.get().getCurrMemberId();
                 }
 
-                if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInToken) && !PatraStringUtils.isBlankAndEmpty(currMemberIdInRedis)) {
+                if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInToken)
+                        && !PatraStringUtils.isBlankAndEmpty(currMemberIdInRedis)) {
                     if (!currMemberIdInToken.equalsIgnoreCase(currMemberIdInRedis)) {
                         logger.log(Level.INFO, "Current Member's id in redis is updated");
                         //TODO: revoke token and create new token with new currMemberId
