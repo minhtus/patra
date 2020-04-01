@@ -2,10 +2,19 @@ package com.prc391.patra.tasks;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.sheets.Sheet;
 import com.prc391.patra.sheets.SheetRepository;
+import com.prc391.patra.users.User;
+import com.prc391.patra.users.UserRedis;
+import com.prc391.patra.users.UserRedisRepository;
+import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.users.permission.Permission;
+import com.prc391.patra.users.permission.PermissionRepository;
+import com.prc391.patra.utils.ControllerSupportUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,20 +30,27 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
     private final MemberRepository memberRepository;
     private final SheetRepository sheetRepository;
+    private final UserRedisRepository userRedisRepository;
+    private final UserRepository userRepository;
+    private final PermissionRepository permissionRepository;
 
     private final Logger logger;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository) {
+    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository, UserRedisRepository userRedisRepository, UserRepository userRepository, PermissionRepository permissionRepository) {
         this.taskRepository = taskRepository;
         this.memberRepository = memberRepository;
         this.sheetRepository = sheetRepository;
+        this.userRedisRepository = userRedisRepository;
+        this.userRepository = userRepository;
+        this.permissionRepository = permissionRepository;
         this.logger = Logger.getLogger("TaskService");
     }
 
@@ -42,10 +58,12 @@ public class TaskService {
     //    @PostFilter(value = "filterObject.assignedMemberId == authentication.principal.currMemberId")
 
     //    @PostAuthorize("returnObject.assignee.contains(authentication.principal.currMemberId)")
-    Task getByTaskId(String taskId) throws EntityNotFoundException {
+    Task getByTaskId(String taskId) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> result = taskRepository.findById(taskId);
         if (result.isPresent()) {
-
+            if (!isAuthorized(result.get(), Arrays.asList("1"))) {
+                throw new UnauthorizedException("Unauthorized");
+            }
             return result.get();
         } else {
             throw new EntityNotFoundException();
@@ -77,7 +95,11 @@ public class TaskService {
     }
 
     Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException {
-        Task task = getByTaskId(taskId);
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+        Task task = optionalTask.get();
         task.mergeForUpdate(updateTask);
         return taskRepository.save(task);
     }
@@ -91,10 +113,29 @@ public class TaskService {
         }
     }
 
+    public Task changeTaskStatus(String taskId, RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+
+        Task task = optionalTask.get();
+        if (!isAuthorized(task, Arrays.asList("5"))) {
+            throw new UnauthorizedException("Unauthorized");
+        }
+        task.setStatusId(status.getStatusId());
+        taskRepository.save(task);
+        return task;
+    }
+
     boolean assignToTask(String taskId, List<String> requestedMemberIds)
             throws EntityNotFoundException {
         //TODO check user before add
-        Task task = this.getByTaskId(taskId);
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+        Task task = optionalTask.get();
         Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
         if (ObjectUtils.isEmpty(sheet)) {
             throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
@@ -169,82 +210,137 @@ public class TaskService {
         return taskResult && memberResult;
     }
 
-//    boolean unassignToTask(String taskId, List<String> requestedMemberIds) throws EntityNotFoundException {
-//        Task task = this.getByTaskId(taskId);
-//        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
-//        if (ObjectUtils.isEmpty(sheet)) {
-//            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
-//        }
-//
-//        //test member's permission before unassigning
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if (ObjectUtils.isEmpty(authentication)) {
-//            //less likely to happen
-//            logger.log(Level.WARNING, "Authentication is empty");
-//            return false;
-//        }
-//        Object principal = authentication.getPrincipal();
-//        if (!(principal instanceof PatraUserPrincipal)) {
-//            logger.log(Level.WARNING, "AnonymousUser!");
-//            return false;
-//        }
-//        Optional<Member> currMemberOptional = memberRepository.findById(((PatraUserPrincipal) authentication.getPrincipal()).getCurrMemberId());
-//        if (!currMemberOptional.isPresent()) {
-//            logger.log(Level.WARNING, "Current member does not exist in db!");
-//            throw new EntityNotFoundException("Current member does not exist in db!");
-//
-//        }
-//
-//        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
-//            // throw new ForbiddenException()
-//            logger.log(Level.WARNING, "Current Member's organization_id: "
-//                    + currMemberOptional.get().getOrgId() +
-//                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
-//            return false;
-//        }
-//        //end checking member's permission
-//
-//        //check if task does have any assignee
-//        if (CollectionUtils.isEmpty(task.getAssignee())) {
-//            throw new EntityNotFoundException("Task " + taskId + " does not have any assignee!");
-//        }
-//        //use this list to ignore requestedMemberIds that do not assigned to Task.
-//        // Add not-assigned memberIds into this list and remove from requestedMemberIds at the end of the loop
-//        List<String> invalidAssigneeId = new ArrayList<>();
-//
-//        //validate each requestedMemberId:
-//        // - Member exist
-//        // - Member's id is exist in Task, Task's id is exist in Member
-//        for (String requestedMemberId : requestedMemberIds) {
-//            Optional<Member> optionalMember = memberRepository.findById(requestedMemberId);
-//            //check member exist
-//            if (!optionalMember.isPresent()) {
-//                throw new EntityNotFoundException("Member with id " + requestedMemberId + " not exist!");
-//            }
-//            Member member = optionalMember.get();
-//            //check if member is assigned to any task
-//            if (CollectionUtils.isEmpty(member.getAssignedTaskId())) {
-////                throw new EntityNotFoundException("Member " + requestedMemberId + " is not assigned to any task!");
-//                logger.log(Level.INFO, "Member " + requestedMemberId + " is not assigned to any task!");
-//
-//            }
-//            if (!member.getAssignedTaskId().contains(taskId)) {
-////                throw new EntityNotFoundException("Member with id " + requestedMemberId +
-////                        " doesn't have task " + taskId);
-//                logger.log(Level.INFO, "Member with id " + requestedMemberId +
-//                        " doesn't have task " + taskId);
-//                invalidAssigneeId.add(requestedMemberId);
-//            }
-//
-//            if (!task.getAssignee().contains(requestedMemberId)) {
-////                throw new EntityNotFoundException("Task " + taskId + " does not assigned to member " + requestedMemberId);
-//                logger.log(Level.INFO, "Task " + taskId + " does not assigned to member " + requestedMemberId);
-//                if (!invalidAssigneeId.contains(requestedMemberId))
-//                    invalidAssigneeId.add(requestedMemberId);
-//            }
-//        }
-//        requestedMemberIds.removeAll(invalidAssigneeId);
-//        return taskRepository.removeAssignee(taskId, requestedMemberIds) &&
-//                memberRepository.removeAssignedTask(requestedMemberIds, Arrays.asList(taskId));
-//    }
+    /**
+     * The method for authorization
+     *
+     * @param returnObject
+     * @param method
+     * @return
+     */
+    private boolean isAuthorized(Task returnObject, List<String> method) throws UnauthorizedException {
+        if (ObjectUtils.isEmpty(returnObject)) {
+            return false;
+        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        if (ObjectUtils.isEmpty(principal)) return false;
+        //check via currMemberIn JWT first
+        String currMemberIdInJWT = principal.getCurrMemberId();
+        if (checkWithCurrIdInJWT(currMemberIdInJWT, returnObject, method)) {
+            return true;
+        } else { //if currMember in JWT cannot access current Task, get all Member to check
+            //get in redis first
+            Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
+            if (optionalUserRedis.isPresent()) {
+                UserRedis userRedis = optionalUserRedis.get();
+                if (checkWithUserRedis(userRedis, returnObject, method)) {
+                    return true;
+                }
+            } else {//user not exist in redis, get all Member in db
+                Optional<User> optionalUser = userRepository.findById(principal.getUsername());
+                if (optionalUser.isPresent()) {
+                    User user = optionalUser.get();
+                    if (checkWithUserInDB(user, returnObject, method)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean checkWithCurrIdInJWT(String currMemberIdInJWT,
+                                         Task task, List<String> mode) {
+
+        if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInJWT)) {
+            if (detailedAuthorization(task, currMemberIdInJWT, mode, null)) return true;
+        }
+        return false;
+    }
+
+    private boolean checkWithUserRedis(UserRedis userRedis, Task task, List<String> mode) {
+        List<String> memberIdsInRedis = userRedis.getMemberIds();
+        if (CollectionUtils.isEmpty(memberIdsInRedis)) return false;
+        for (String memberIdInRedis : memberIdsInRedis) {
+            if (detailedAuthorization(task, memberIdInRedis, mode, userRedis)) return true;
+        }
+        return false;
+    }
+
+    private boolean checkWithUserInDB(User user, Task task, List<String> mode) {
+        List<String> userMemberList = memberRepository.getAllByUsername(user.getUsername()).stream()
+                .map(member -> member.getMemberId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(userMemberList)) return false;
+        for (String userMember : userMemberList) {
+            if (detailedAuthorization(task, userMember, mode, null)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Each method have different authorization business, use mode param to determine which method is running
+     * @param task used to get organization (from sheet), get assigneeId list
+     * @param currMemberId can be currMemberIdInJWT, currMemberIdInRedis, currMemberIdInDB
+     * @param mode 1 for getTaskById, 5 for changeTaskStatus
+     * @param userRedis if provided, then new user in redis will be updated
+     * @return
+     */
+    private boolean detailedAuthorization(Task task, String currMemberId, List<String> mode, UserRedis userRedis) {
+        Sheet sheet = getSheetFromId(task.getSheetId());
+        if (ObjectUtils.isEmpty(sheet)) return false;
+        Member currMember = getMemberFromId(currMemberId);
+        if (ObjectUtils.isEmpty(currMember)) {
+            return false;
+        }
+
+        if (mode.contains("1")) {//get task
+            if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) {
+                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
+                return true;
+            }
+        }
+        if (mode.contains("5")) {//set task done/undone
+            //is assigned
+            if (task.getAssignee().contains(currMemberId)) {
+                //permission: MEMBER_EDIT, MEMBER_WRITE
+                List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(currMember.getPermissions())).stream()
+                        .map(permission -> permission.getName()).collect(Collectors.toList());
+                List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
+                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
+                return permissionChecker(permissions, requiredPermissions);
+            }
+        }
+        return false;
+    }
+
+    private Sheet getSheetFromId(String id) {
+        Optional<Sheet> optionalSheet = sheetRepository.findById(id);
+        if (optionalSheet.isPresent()) {
+            return optionalSheet.get();
+        }
+        return null;
+    }
+
+    private Member getMemberFromId(String id) {
+        Optional<Member> optionalMember = memberRepository.findById(id);
+        if (optionalMember.isPresent()) {
+            return optionalMember.get();
+        }
+        return null;
+    }
+
+    private boolean permissionChecker(List<String> userPermissions, List<String> requiredPermissions) {
+        if (CollectionUtils.isEmpty(userPermissions) || CollectionUtils.isEmpty(requiredPermissions)) {
+            return false;
+        }
+        for (String requiredPermission : requiredPermissions) {
+            if (userPermissions.contains(requiredPermission)) return true;
+        }
+        return false;
+    }
+
+    private void setNewCurrMemberIdInRedis(UserRedis userRedis, String newCurrMemberId) {
+        userRedisRepository.deleteById(userRedis.getUsername());
+        userRedis.setCurrMemberId(newCurrMemberId);
+        userRedisRepository.save(userRedis);
+    }
 }

@@ -35,6 +35,11 @@ public class PermissionService {
         return permission.get();
     }
 
+    public List<Permission> getPermission(List<Long> ids) {
+        List<Permission> permissionList = permissionRepository.getByIdIn(ids);
+        return permissionList;
+    }
+
     public List<Permission> getAllPermission(){
         return permissionRepository.findAll();
     }

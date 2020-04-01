@@ -24,6 +24,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -69,16 +70,19 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String username = authentication.getName();
 
         String email = ((PatraUserPrincipal) authentication.getPrincipal()).getEmail();
+        if (ObjectUtils.isEmpty(authentication.getCredentials())) {
+            throw new BadCredentialsException("Credentials is null");
+        }
         String password = authentication.getCredentials().toString();
 
         //login using username or email
         User user = null;
-        if (!StringUtils.isEmpty(username)) {
+        if (!PatraStringUtils.isBlankAndEmpty(username)) {
             Optional<User> optionalUser = userRepository.findById(username);
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
             }
-        } else if (!StringUtils.isEmpty(email)) {
+        } else if (!PatraStringUtils.isBlankAndEmpty(email)) {
             user = userRepository.getUserByEmail(email);
         } else {
             throw new BadCredentialsException("Something wrong here");
@@ -89,6 +93,11 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         if (user == null) {
             throw new BadCredentialsException
                     ("(username or email (or password) not valid message, use config file instead of hardcoding)");
+        }
+        if (PatraStringUtils.isBlankAndEmpty(password)) {
+            throw new BadCredentialsException(
+                    "password is empty"
+            );
         }
         if (!passwordEncoder.matches(password, user.getPassHash())) {
             throw new BadCredentialsException
@@ -126,7 +135,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String loggedInEmail = user.getEmail();
         PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
                 CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail
-                , currMemberId == null ? "" : currMemberId, memberIds == null ? new ArrayList<>() : memberIds);
+                , currMemberId == null ? "" : currMemberId, null);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,
