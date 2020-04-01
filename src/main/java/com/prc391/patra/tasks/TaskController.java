@@ -9,8 +9,8 @@ import com.prc391.patra.members.MemberService;
 import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import com.prc391.patra.users.UserRedisService;
-import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionService;
+import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.JWTUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,26 +46,26 @@ public class TaskController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication.getPrincipal() instanceof PatraUserPrincipal) {
-            PatraUserPrincipal principal = (PatraUserPrincipal) authentication.getPrincipal();
-            String oldCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
-            if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
-                //redis and jwt is not sync
-            }
-            Task task = taskService.getByTaskId(taskId);
-            String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
-            if (!oldCurrMemberIdInRedis.equalsIgnoreCase(newCurrMemberIdInRedis)) {
-                HttpHeaders newAuthorizationHeader = getNewAuthorizationHeader(newCurrMemberIdInRedis, principal.getUsername());
-                return ResponseEntity.ok()
-                        .headers(newAuthorizationHeader)
-                        .body(task);
-            } else {
-                return ResponseEntity.ok(task);
-            }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        //get old currMemId to check with new currMemId after the authorization method in Service
+        //if different, issue new JWT, if not, return normal
+        String oldCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
+        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
+            //redis and jwt is not sync
+        }
+        Task task = taskService.getByTaskId(taskId);
+        String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
+        //reissue token when oldCurrMemId cannot be used to view the task
+        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(newCurrMemberIdInRedis)) {//different, new JWT
+            HttpHeaders newAuthorizationHeader = getNewAuthorizationHeader(newCurrMemberIdInRedis, principal.getUsername());
+            return ResponseEntity.ok()
+                    .headers(newAuthorizationHeader)
+                    .body(task);
+        } else {// not different, return like normal
+            return ResponseEntity.ok(task);
         }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+
     }
 
     @PostMapping
@@ -100,7 +99,22 @@ public class TaskController {
     @PatchMapping("/{id}/status")
     public ResponseEntity setTaskStatus(@PathVariable("id") String taskId,
                                         @RequestParam RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
-        return ResponseEntity.ok(taskService.changeTaskStatus(taskId, status));
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        String oldCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
+        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
+            //redis and jwt is not sync
+        }
+        Task task = taskService.changeTaskStatus(taskId, status);
+        String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
+        //reissue token when oldCurrMemId cannot be used to view the task
+        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(newCurrMemberIdInRedis)) {
+            HttpHeaders newAuthorizationHeader = getNewAuthorizationHeader(newCurrMemberIdInRedis, principal.getUsername());
+            return ResponseEntity.ok()
+                    .headers(newAuthorizationHeader)
+                    .body(task);
+        } else {
+            return ResponseEntity.ok(task);
+        }
     }
 
     //TODO: delete this after development
@@ -108,7 +122,6 @@ public class TaskController {
     public ResponseEntity getAllTask() {
         return ResponseEntity.ok(taskService.getAllTask());
     }
-
 
     private HttpHeaders getNewAuthorizationHeader(String newCurrMemberIdInRedis, String username)
             throws EntityNotFoundException {

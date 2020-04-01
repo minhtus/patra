@@ -222,8 +222,6 @@ public class TaskService {
         }
         PatraUserPrincipal principal = getUserPrincipal();
         if (ObjectUtils.isEmpty(principal)) return false;
-        //check permission
-//        if (!permissionChecker(principal.getAuthorities())) return false;
         //check via currMemberIn JWT first
         String currMemberIdInJWT = principal.getCurrMemberId();
         if (checkWithCurrIdInJWT(currMemberIdInJWT, returnObject, method)) {
@@ -236,7 +234,7 @@ public class TaskService {
                 if (checkWithUserRedis(userRedis, returnObject, method)) {
                     return true;
                 }
-            } else {//user not exist in redis, get in db
+            } else {//user not exist in redis, get all Member in db
                 Optional<User> optionalUser = userRepository.findById(principal.getUsername());
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
@@ -298,7 +296,7 @@ public class TaskService {
                     //permission: MEMBER_READ, MEMBER_WRITE
                     List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(memberInRedis.getPermissions())).stream()
                             .map(permission -> permission.getName()).collect(Collectors.toList());
-                    List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
+                    List<String> requiredPermissions = Arrays.asList("MEMBER_READ", "MEMBER_WRITE");
                     if (permissionChecker(permissions, requiredPermissions)) {
                         setNewCurrMemberIdInRedis(userRedis, memberIdInRedis);
                         return true;

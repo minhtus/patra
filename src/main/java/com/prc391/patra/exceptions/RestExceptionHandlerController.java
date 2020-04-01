@@ -15,6 +15,6 @@ public class RestExceptionHandlerController {
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity unauthorizedHandler() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 }

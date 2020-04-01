@@ -12,10 +12,6 @@ import java.util.Map;
 public class JWTUtils {
     public static String buildJWT(Collection<String> authorities, String currMemberId, String username) {
         Map<String, Object> claimsMap = new HashMap<>();
-//        for (SimpleGrantedAuthority authority : authorities) {
-//            claimsAuthorities.put("authority",authority.getAuthority());
-//        }
-
         claimsMap.put(SecurityConstants.JWT_CLAIMS_AUTHORITY, authorities);
         claimsMap.put(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, currMemberId);
         String JWT = Jwts.builder()
