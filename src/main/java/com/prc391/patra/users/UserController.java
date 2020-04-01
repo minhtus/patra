@@ -3,6 +3,8 @@ package com.prc391.patra.users;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.InvalidInputException;
+import com.prc391.patra.members.Member;
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import org.modelmapper.ModelMapper;
@@ -56,10 +58,16 @@ public class UserController {
     }
 
     //TODO get all org of user (members) maybe done?
-    @GetMapping("/{username}/organization")
+    @GetMapping("/{username}/organizations")
     public ResponseEntity<List<Organization>> getUserOrganization(
             @PathVariable("username") String username) throws EntityNotFoundException {
         return ResponseEntity.ok(userService.getUserOrganization(username));
+    }
+
+    @GetMapping("/{username}/members")
+    public ResponseEntity<List<MemberResponse>> getUserMember(
+            @PathVariable("username") String username) throws EntityNotFoundException {
+        return ResponseEntity.ok(userService.getUserMember(username));
     }
 
     @PatchMapping("/{username}/curr-member")
@@ -70,6 +78,8 @@ public class UserController {
         userService.updateCurrMemberId(username, currMemberId);
         return ResponseEntity.ok().build();
     }
+
+
 
     //TODO get all lists of user
     //TODO get all task of user
