@@ -120,8 +120,12 @@ class UserService {
         }
         user.setCurrMemberId(currMemberId);
         //change curr-member-id, overall memberIds of user is not changed
+        //but if the memberIds is not presisted, it will lost
+        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(username);
         userRedisRepository.deleteById(username);
         UserRedis userRedis = mapper.map(user, UserRedis.class);
+        List<Member> memberList = memberRepository.getAllByUsername(username);
+        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
         userRedisRepository.save(userRedis);
         userRepository.save(user);
     }

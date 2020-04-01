@@ -1,6 +1,7 @@
 package com.prc391.patra.tasks;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import org.modelmapper.ModelMapper;
@@ -25,7 +26,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
+    public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(taskService.getByTaskId(taskId));
     }
 
@@ -59,8 +60,8 @@ public class TaskController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity setTaskStatus(@PathVariable("id") String taskId,
-                                     @RequestParam RefTaskStatus status) {
-        return ResponseEntity.ok().build();
+                                     @RequestParam RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
+        return ResponseEntity.ok(taskService.changeTaskStatus(taskId, status));
     }
 
     //TODO: delete this after development
