@@ -6,6 +6,7 @@ import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.InvalidInputException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.role.RoleRepository;
@@ -18,7 +19,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -103,6 +107,35 @@ class UserService {
             throw new EntityNotFoundException("Org not exist!");
         }
         return organizationList;
+    }
+
+    public List<MemberResponse> getUserMember(String username) throws EntityNotFoundException {
+        Optional<User> user = userRepository.findById(username);
+        if (!user.isPresent()) {
+            throw new EntityNotFoundException("User "+ username +" not found");
+        }
+        List<Member> memberList = memberRepository.getAllByUsername(username);
+        List<MemberResponse> memberResponses = new ArrayList<>();
+        for (Member member : memberList) {
+            MemberResponse memberResponse = mapper.map(member, MemberResponse.class);
+            Optional<Organization> optionalOrganization = organizationRepository.findById(member.getOrgId());
+            if (optionalOrganization.isPresent()){
+                memberResponse.setOrganization(optionalOrganization.get());
+            }
+//            memberResponse.setOrganization(org);
+            memberResponses.add(memberResponse);
+        }
+//        List<String> orgIdList = memberList.stream()
+//                .map(member -> member.getOrgId())
+//                .collect(Collectors.toList());
+//        if (CollectionUtils.isEmpty(orgIdList)) {
+//            throw new EntityNotFoundException("OrgIds is null");
+//        }
+//        List<Organization> organizationList = organizationRepository.getAllByOrgIdIn(orgIdList);
+//        if (CollectionUtils.isEmpty(organizationList)) {
+//            throw new EntityNotFoundException("Org not exist!");
+//        }
+        return memberResponses;
     }
 
     public void updateCurrMemberId(String username, String currMemberId) throws EntityNotFoundException, InvalidInputException {
