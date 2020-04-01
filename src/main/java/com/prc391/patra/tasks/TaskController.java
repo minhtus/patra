@@ -4,6 +4,7 @@ import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
+import com.prc391.patra.jwt.JwtRedisService;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberService;
 import com.prc391.patra.tasks.requests.CreateTaskRequest;
@@ -12,14 +13,12 @@ import com.prc391.patra.users.UserRedisService;
 import com.prc391.patra.users.permission.PermissionService;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.JWTUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -34,14 +33,16 @@ public class TaskController {
     private final UserRedisService userRedisService;
     private final PermissionService permissionService;
     private final MemberService memberService;
+    private final JwtRedisService jwtRedisService;
 
     @Autowired
-    public TaskController(TaskService taskService, ModelMapper mapper, UserRedisService userRedisService, PermissionService permissionService, MemberService memberService) {
+    public TaskController(TaskService taskService, ModelMapper mapper, UserRedisService userRedisService, PermissionService permissionService, MemberService memberService, JwtRedisService jwtRedisService) {
         this.taskService = taskService;
         this.mapper = mapper;
         this.userRedisService = userRedisService;
         this.permissionService = permissionService;
         this.memberService = memberService;
+        this.jwtRedisService = jwtRedisService;
     }
 
     @GetMapping("/{id}")
@@ -57,6 +58,10 @@ public class TaskController {
         String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
         //reissue token when oldCurrMemId cannot be used to view the task
         if (!oldCurrMemberIdInRedis.equalsIgnoreCase(newCurrMemberIdInRedis)) {//different, new JWT
+            //invalidate jwt by storing it in a blacklist
+            if (!PatraStringUtils.isBlankAndEmpty(principal.getJwt())) {
+                jwtRedisService.saveToRedisBlacklist(principal.getJwt());
+            }
             HttpHeaders newAuthorizationHeader = getNewAuthorizationHeader(newCurrMemberIdInRedis, principal.getUsername());
             return ResponseEntity.ok()
                     .headers(newAuthorizationHeader)
@@ -106,6 +111,9 @@ public class TaskController {
         String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
         //reissue token when oldCurrMemId cannot be used to view the task
         if (!oldCurrMemberIdInRedis.equalsIgnoreCase(newCurrMemberIdInRedis)) {
+            if (!PatraStringUtils.isBlankAndEmpty(principal.getJwt())) {
+                jwtRedisService.saveToRedisBlacklist(principal.getJwt());
+            }
             HttpHeaders newAuthorizationHeader = getNewAuthorizationHeader(newCurrMemberIdInRedis, principal.getUsername());
             return ResponseEntity.ok()
                     .headers(newAuthorizationHeader)

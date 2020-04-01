@@ -1,6 +1,8 @@
 package com.prc391.patra.utils;
 
 import com.prc391.patra.config.security.SecurityConstants;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -20,5 +22,12 @@ public class JWTUtils {
                 .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
         return JWT;
+    }
+
+    public static Claims getClaimsBodyFromJWT(String jwt) {
+        Jws<Claims> claims = Jwts.parser().setSigningKey(SecurityConstants.SECRET)
+                .parseClaimsJws(jwt.replace(SecurityConstants.TOKEN_PREFIX, ""));
+        Claims body = claims.getBody();
+        return body;
     }
 }

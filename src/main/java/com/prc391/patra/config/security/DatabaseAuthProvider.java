@@ -126,7 +126,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String loggedInEmail = user.getEmail();
         PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
                 CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail
-                , currMemberId == null ? "" : currMemberId, memberIds == null ? new ArrayList<>() : memberIds);
+                , currMemberId == null ? "" : currMemberId, null);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,
