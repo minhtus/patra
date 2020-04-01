@@ -73,12 +73,12 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
         //login using username or email
         User user = null;
-        if (!StringUtils.isEmpty(username)) {
+        if (!PatraStringUtils.isBlankAndEmpty(username)) {
             Optional<User> optionalUser = userRepository.findById(username);
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
             }
-        } else if (!StringUtils.isEmpty(email)) {
+        } else if (!PatraStringUtils.isBlankAndEmpty(email)) {
             user = userRepository.getUserByEmail(email);
         } else {
             throw new BadCredentialsException("Something wrong here");

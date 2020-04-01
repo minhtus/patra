@@ -20,27 +20,9 @@ public class PatraLogoutSuccessHandler extends
 
     Logger logger = Logger.getLogger("LogoutSuccessHandler");
 
-
-    public PatraLogoutSuccessHandler() {
-
-    }
-
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         logger.log(Level.INFO, "Logout handler here");
-//        try {
-//            PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
-//            if (!PatraStringUtils.isBlankAndEmpty(principal.getJwt())) {
-//                if (!jwtRedisService.saveToRedisBlacklist(principal.getJwt())) {
-//                    logger.log(Level.SEVERE, "JWT " + principal.getJwt() + " exists in blacklist! Check JWTAuthenticationFilter for errors!");
-//                }
-//            } else {
-//                logger.log(Level.SEVERE, "JWT in principal is missing!");
-//            }
-//        } catch (UnauthorizedException e) {
-//            logger.log(Level.SEVERE, "User did not login properly, no principal is found, which means no jwt is passed!");
-//        }
-
         super.onLogoutSuccess(request, response, authentication);
     }
 }
