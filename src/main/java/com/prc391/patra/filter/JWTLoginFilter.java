@@ -2,8 +2,7 @@ package com.prc391.patra.filter;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.prc391.patra.utils.JWTUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,11 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,25 +56,15 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 
         PatraUserPrincipal principal = (PatraUserPrincipal) authResult.getPrincipal();
         String username = principal.getUsername();
-//        List<String> currMemberId = principal.getMemberIds();
+
         String currMemberId = principal.getCurrMemberId();
         List<SimpleGrantedAuthority> authorities = (List<SimpleGrantedAuthority>) authResult.getAuthorities();
         Set<String> setAuthorities = new HashSet<>();
         for (SimpleGrantedAuthority authority : authorities) {
             setAuthorities.add(authority.getAuthority());
         }
-        Map<String, Object> claimsMap = new HashMap<>();
-//        for (SimpleGrantedAuthority authority : authorities) {
-//            claimsAuthorities.put("authority",authority.getAuthority());
-//        }
 
-        claimsMap.put(SecurityConstants.JWT_CLAIMS_AUTHORITY, setAuthorities);
-        claimsMap.put(SecurityConstants.JWT_CLAIMS_CURR_MEMBER_ID, currMemberId);
-        String JWT = Jwts.builder()
-                .setClaims(claimsMap)
-                .setSubject(username)
-                .setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS512, SecurityConstants.SECRET).compact();
+        String JWT = JWTUtils.buildJWT(setAuthorities, currMemberId, username);
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + " " + JWT);
         //return the jwt in body
         //Authorization header is exposed, remove return the jwt in body

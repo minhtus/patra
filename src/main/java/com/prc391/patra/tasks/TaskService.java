@@ -260,7 +260,9 @@ public class TaskService {
             }
 
             if (mode.contains("1")) {//get task
-                if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) return true;
+                if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) {
+                    return true;
+                }
             }
             if (mode.contains("5")) {//set task done/undone
                 //is assigned
@@ -285,7 +287,10 @@ public class TaskService {
             Member memberInRedis = getMemberFromId(memberIdInRedis);
 
             if (mode.contains("1")) {
-                if (sheet.getOrgId().equalsIgnoreCase(memberInRedis.getOrgId())) return true;
+                if (sheet.getOrgId().equalsIgnoreCase(memberInRedis.getOrgId())) {
+                    setNewCurrMemberIdInRedis(userRedis, memberIdInRedis);
+                    return true;
+                }
             }
             if (mode.contains("5")) {
                 //is assigned
@@ -294,7 +299,10 @@ public class TaskService {
                     List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(memberInRedis.getPermissions())).stream()
                             .map(permission -> permission.getName()).collect(Collectors.toList());
                     List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
-                    if (permissionChecker(permissions, requiredPermissions)) return true;
+                    if (permissionChecker(permissions, requiredPermissions)) {
+                        setNewCurrMemberIdInRedis(userRedis, memberIdInRedis);
+                        return true;
+                    }
                 }
 
             }
@@ -364,5 +372,11 @@ public class TaskService {
             if (userPermissions.contains(requiredPermission)) return true;
         }
         return false;
+    }
+
+    private void setNewCurrMemberIdInRedis(UserRedis userRedis, String newCurrMemberId) {
+        userRedisRepository.deleteById(userRedis.getUsername());
+        userRedis.setCurrMemberId(newCurrMemberId);
+        userRedisRepository.save(userRedis);
     }
 }
