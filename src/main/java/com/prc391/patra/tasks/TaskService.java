@@ -13,6 +13,7 @@ import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
+import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.PatraStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -216,11 +217,11 @@ public class TaskService {
      * @param method
      * @return
      */
-    private boolean isAuthorized(Task returnObject, List<String> method) {
+    private boolean isAuthorized(Task returnObject, List<String> method) throws UnauthorizedException {
         if (ObjectUtils.isEmpty(returnObject)) {
             return false;
         }
-        PatraUserPrincipal principal = getUserPrincipal();
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
         if (ObjectUtils.isEmpty(principal)) return false;
         //check via currMemberIn JWT first
         String currMemberIdInJWT = principal.getCurrMemberId();
@@ -249,101 +250,66 @@ public class TaskService {
 
     private boolean checkWithCurrIdInJWT(String currMemberIdInJWT,
                                          Task task, List<String> mode) {
-        Sheet sheet = getSheetFromId(task.getSheetId());
-        if (ObjectUtils.isEmpty(sheet)) return false;
-        if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInJWT)) {
-            Member currMember = getMemberFromId(currMemberIdInJWT);
-            if (ObjectUtils.isEmpty(currMember)) {
-                return false;
-            }
 
-            if (mode.contains("1")) {//get task
-                if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) {
-                    return true;
-                }
-            }
-            if (mode.contains("5")) {//set task done/undone
-                //is assigned
-                if (task.getAssignee().contains(currMemberIdInJWT)) {
-                    //permission: MEMBER_EDIT, MEMBER_WRITE
-                    List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(currMember.getPermissions())).stream()
-                            .map(permission -> permission.getName()).collect(Collectors.toList());
-                    List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
-                    return permissionChecker(permissions, requiredPermissions);
-                }
-            }
+        if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInJWT)) {
+            if (detailedAuthorization(task, currMemberIdInJWT, mode, null)) return true;
         }
         return false;
     }
 
     private boolean checkWithUserRedis(UserRedis userRedis, Task task, List<String> mode) {
-        Sheet sheet = getSheetFromId(task.getSheetId());
-        if (ObjectUtils.isEmpty(sheet)) return false;
         List<String> memberIdsInRedis = userRedis.getMemberIds();
         if (CollectionUtils.isEmpty(memberIdsInRedis)) return false;
         for (String memberIdInRedis : memberIdsInRedis) {
-            Member memberInRedis = getMemberFromId(memberIdInRedis);
-
-            if (mode.contains("1")) {
-                if (sheet.getOrgId().equalsIgnoreCase(memberInRedis.getOrgId())) {
-                    setNewCurrMemberIdInRedis(userRedis, memberIdInRedis);
-                    return true;
-                }
-            }
-            if (mode.contains("5")) {
-                //is assigned
-                if (task.getAssignee().contains(memberIdInRedis)) {
-                    //permission: MEMBER_READ, MEMBER_WRITE
-                    List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(memberInRedis.getPermissions())).stream()
-                            .map(permission -> permission.getName()).collect(Collectors.toList());
-                    List<String> requiredPermissions = Arrays.asList("MEMBER_READ", "MEMBER_WRITE");
-                    if (permissionChecker(permissions, requiredPermissions)) {
-                        setNewCurrMemberIdInRedis(userRedis, memberIdInRedis);
-                        return true;
-                    }
-                }
-
-            }
+            if (detailedAuthorization(task, memberIdInRedis, mode, userRedis)) return true;
         }
         return false;
     }
 
     private boolean checkWithUserInDB(User user, Task task, List<String> mode) {
-        Sheet sheet = getSheetFromId(task.getSheetId());
-        if (ObjectUtils.isEmpty(sheet)) return false;
-        List<Member> userMemberList = memberRepository.getAllByUsername(user.getUsername());
+        List<String> userMemberList = memberRepository.getAllByUsername(user.getUsername()).stream()
+                .map(member -> member.getMemberId()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(userMemberList)) return false;
-        for (Member userMember : userMemberList) {
-            if (mode.contains("1")) {
-                if (sheet.getOrgId().equalsIgnoreCase(userMember.getOrgId())) return true;
-            }
-            if (mode.contains("5")) {
-                //is assigned
-                if (task.getAssignee().contains(userMember)) {
-                    //permission: MEMBER_READ, MEMBER_WRITE
-                    List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(userMember.getPermissions())).stream()
-                            .map(permission -> permission.getName()).collect(Collectors.toList());
-                    List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT","MEMBER_WRITE");
-                    if (permissionChecker(permissions, requiredPermissions)) return true;
-                }
-
-            }
+        for (String userMember : userMemberList) {
+            if (detailedAuthorization(task, userMember, mode, null)) return true;
         }
         return false;
     }
 
-    private PatraUserPrincipal getUserPrincipal() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (ObjectUtils.isEmpty(authentication)) {
-            return null;
+    /**
+     * Each method have different authorization business, use mode param to determine which method is running
+     * @param task used to get organization (from sheet), get assigneeId list
+     * @param currMemberId can be currMemberIdInJWT, currMemberIdInRedis, currMemberIdInDB
+     * @param mode 1 for getTaskById, 5 for changeTaskStatus
+     * @param userRedis if provided, then new user in redis will be updated
+     * @return
+     */
+    private boolean detailedAuthorization(Task task, String currMemberId, List<String> mode, UserRedis userRedis) {
+        Sheet sheet = getSheetFromId(task.getSheetId());
+        if (ObjectUtils.isEmpty(sheet)) return false;
+        Member currMember = getMemberFromId(currMemberId);
+        if (ObjectUtils.isEmpty(currMember)) {
+            return false;
         }
-        //get principal, to get username and currMemberIds
-        Object principalObject = authentication.getPrincipal();
-        if (!(principalObject instanceof PatraUserPrincipal)) {
-            return null;
+
+        if (mode.contains("1")) {//get task
+            if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) {
+                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
+                return true;
+            }
         }
-        PatraUserPrincipal principal = (PatraUserPrincipal) principalObject;
-        return principal;
+        if (mode.contains("5")) {//set task done/undone
+            //is assigned
+            if (task.getAssignee().contains(currMemberId)) {
+                //permission: MEMBER_EDIT, MEMBER_WRITE
+                List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(currMember.getPermissions())).stream()
+                        .map(permission -> permission.getName()).collect(Collectors.toList());
+                List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
+                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
+                return permissionChecker(permissions, requiredPermissions);
+            }
+        }
+        return false;
     }
 
     private Sheet getSheetFromId(String id) {
