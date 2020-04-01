@@ -1,9 +1,5 @@
 package com.prc391.patra.config.security;
 
-import com.prc391.patra.exceptions.UnauthorizedException;
-import com.prc391.patra.jwt.JwtRedisService;
-import com.prc391.patra.utils.ControllerSupportUtils;
-import com.prc391.patra.utils.PatraStringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;

@@ -3,6 +3,7 @@ package com.prc391.patra.filter;
 import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
 import com.prc391.patra.utils.JWTUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -10,7 +11,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -37,13 +37,17 @@ public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         String username = request.getParameter("username");
         String email = request.getParameter("email");
-        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(email)) {
+        if (!PatraStringUtils.isEmpty(username) && !PatraStringUtils.isEmpty(email)) {
             javaLogger.log(Level.WARNING, "Login with both username and email at the same time? " +
                     "Interesting, but we did not have use case for this yet :/ ");
             return null;
         }
 
         String password = request.getParameter("password");
+        if (PatraStringUtils.isBlankAndEmpty(password)) {
+            javaLogger.log(Level.INFO, "Password is null");
+//            return null;
+        }
         PatraUserPrincipal principal = new PatraUserPrincipal(username, password, Collections.emptyList(), email, null, null);
 
         return getAuthenticationManager()

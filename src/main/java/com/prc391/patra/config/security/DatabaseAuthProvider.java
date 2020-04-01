@@ -24,6 +24,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -69,6 +70,9 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         String username = authentication.getName();
 
         String email = ((PatraUserPrincipal) authentication.getPrincipal()).getEmail();
+        if (ObjectUtils.isEmpty(authentication.getCredentials())) {
+            throw new BadCredentialsException("Credentials is null");
+        }
         String password = authentication.getCredentials().toString();
 
         //login using username or email
@@ -89,6 +93,11 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         if (user == null) {
             throw new BadCredentialsException
                     ("(username or email (or password) not valid message, use config file instead of hardcoding)");
+        }
+        if (PatraStringUtils.isBlankAndEmpty(password)) {
+            throw new BadCredentialsException(
+                    "password is empty"
+            );
         }
         if (!passwordEncoder.matches(password, user.getPassHash())) {
             throw new BadCredentialsException
