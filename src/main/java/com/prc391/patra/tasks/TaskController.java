@@ -51,9 +51,9 @@ public class TaskController {
         //get old currMemId to check with new currMemId after the authorization method in Service
         //if different, issue new JWT, if not, return normal
         String oldCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
-        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
-            //redis and jwt is not sync
-        }
+//        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
+//            //redis and jwt is not sync
+//        }
         Task task = taskService.getByTaskId(taskId);
         String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
         //reissue token when oldCurrMemId cannot be used to view the task
@@ -104,9 +104,9 @@ public class TaskController {
                                         @RequestParam RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
         PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
         String oldCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
-        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
-            //redis and jwt is not sync
-        }
+//        if (!oldCurrMemberIdInRedis.equalsIgnoreCase(principal.getCurrMemberId())) {
+//            //redis and jwt is not sync
+//        }
         Task task = taskService.changeTaskStatus(taskId, status);
         String newCurrMemberIdInRedis = userRedisService.getCurrMemberIdInRedis(principal.getUsername());
         //reissue token when oldCurrMemId cannot be used to view the task

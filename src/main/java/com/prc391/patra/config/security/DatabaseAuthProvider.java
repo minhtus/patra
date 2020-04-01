@@ -133,7 +133,7 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         //use username and email got from user to build Principal, because passed username/email may be null
         String loggedInUsername = user.getUsername();
         String loggedInEmail = user.getEmail();
-        PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
+        PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, "a",
                 CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail
                 , currMemberId == null ? "" : currMemberId, null);
 
