@@ -4,8 +4,10 @@ import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.config.security.SecurityConstants;
 import com.prc391.patra.jwt.JwtRedisService;
 import com.prc391.patra.utils.JWTUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -49,7 +51,7 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
     public Authentication getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(SecurityConstants.HEADER_STRING);
         try {
-            if (token != null) {
+            if (!PatraStringUtils.isBlankAndEmpty(token)) {
                 if (!jwtRedisService.isExistInBlacklist(token)) {
                     Claims body = JWTUtils.getClaimsBodyFromJWT(token);
                     String username = body.getSubject();
@@ -72,6 +74,8 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
         } catch (ExpiredJwtException ex) {
             logger.log(Level.INFO, "Header: " + ex.getHeader() + " Claims: " + ex.getClaims() + "Token expired: " + ex.getMessage());
 //            throw new ExpiredJwtException(ex.getHeader() ,ex.getClaims(), "Token expired: " + ex.getMessage());
+        } catch (JwtException ex) {
+            logger.log(Level.INFO, "JWT errors: " + ex.getMessage());
         }
         //TODO: throw exception
         return null;
