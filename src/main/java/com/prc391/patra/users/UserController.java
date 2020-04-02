@@ -12,6 +12,7 @@ import com.prc391.patra.members.MemberService;
 import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.users.permission.PermissionService;
+import com.prc391.patra.users.requests.ChangePassRequest;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.JWTUtils;
@@ -74,6 +75,15 @@ public class UserController {
         user.setPassHash(request.getPassword());
         return ResponseEntity.ok(userService.registerUser(user));
     }
+
+
+    @PostMapping("/change-pass")
+    public ResponseEntity changePassword(
+            @RequestBody ChangePassRequest changePassRequest) throws UnauthorizedException, EntityNotFoundException {
+        userService.changePassword(changePassRequest);
+        return ResponseEntity.ok().build();
+    }
+
 
     //TODO get all org of user (members) maybe done?
     @GetMapping("/{username}/organizations")

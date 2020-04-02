@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/v0/role")
+//@RestController
+//@RequestMapping("/v0/role")
 public class RoleController {
 
     private final RoleService roleService;
@@ -28,12 +28,12 @@ public class RoleController {
         this.roleService = roleService;
     }
 
-    @GetMapping
+//    @GetMapping
     public ResponseEntity<List<Role>> getAllRole() {
         return ResponseEntity.ok(roleService.getAllRole());
     }
 
-    @GetMapping("/{id}")
+//    @GetMapping("/{id}")
     public ResponseEntity<Role> getRole(
             @PathVariable(value = "id") Long roleId)
             throws EntityNotFoundException {
@@ -44,14 +44,14 @@ public class RoleController {
         return ResponseEntity.ok(roleService.getRoleById(roleId));
     }
 
-    @PostMapping
+//    @PostMapping
     public ResponseEntity<Role> createRole(
             @RequestBody Role request)
             throws EntityExistedException, EntityNotFoundException, InvalidInputException {
         return ResponseEntity.ok(roleService.insertRole(request));
     }
 
-    @PutMapping("/{id}")
+//    @PutMapping("/{id}")
     public ResponseEntity<Role> updateRole(
             @RequestBody Role request,
             @PathVariable("id") Long roleId)
