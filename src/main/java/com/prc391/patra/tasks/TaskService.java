@@ -217,6 +217,12 @@ public class TaskService {
         return taskResult && memberResult;
     }
 
+    public boolean attachImage(String taskId, String imagePath) throws EntityNotFoundException {
+        if (taskRepository.existsById(taskId))
+            throw new EntityNotFoundException();
+        return taskRepository.updateAttachImage(taskId, imagePath);
+    }
+
     /**
      * The method for authorization
      *
