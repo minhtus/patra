@@ -14,10 +14,8 @@ import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.requests.ChangePassRequest;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.PatraStringUtils;
-import com.prc391.patra.users.role.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,8 +24,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -125,7 +121,7 @@ class UserService {
         return memberResponses;
     }
 
-    public boolean changePassword(ChangePassRequest changePassRequest) throws UnauthorizedException, EntityNotFoundException {
+    public boolean changePassword(ChangePassRequest changePassRequest) throws UnauthorizedException, EntityNotFoundException, InvalidInputException {
         if (ObjectUtils.isEmpty(changePassRequest)) {
             throw new EntityNotFoundException("ChangePassRequest is empty");
         }
@@ -133,13 +129,16 @@ class UserService {
                 PatraStringUtils.isBlankAndEmpty(changePassRequest.getOldPassword())) {
             throw new EntityNotFoundException("Old pass or New pass is empty");
         }
+        if (changePassRequest.getOldPassword().equalsIgnoreCase(changePassRequest.getNewPassword())) {
+            throw new InvalidInputException("Old pass and New pass is the same");
+        }
         PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
         if (ObjectUtils.isEmpty(principal)) {
             throw new UnauthorizedException("Unauthorized");
         }
         Optional<User> optionalUser = userRepository.findById(principal.getUsername());
         if (!optionalUser.isPresent()) {
-            throw new EntityNotFoundException("User " + principal.getUsername() + " not exist in db");
+            throw new UnauthorizedException("You don't have permission to access this resource");
         }
         User user = optionalUser.get();
         if (!passwordEncoder.matches(changePassRequest.getOldPassword(), user.getPassHash())) {
@@ -155,9 +154,9 @@ class UserService {
     private void updateUserInRedis(User user) {
         userRedisRepository.deleteById(user.getUsername());
         UserRedis userRedis = mapper.map(user, UserRedis.class);
-        List<Member> memberList = memberRepository.getAllByUsername(user.getUsername());
-//        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
+        Map<String, String> orgPermission = memberRepository.getAllByUsername(user.getUsername()).stream()
+                .collect(Collectors.toMap(Member::getOrgId, Member::getPermission));
+        userRedis.setOrgPermissions(orgPermission);
         userRedisRepository.save(userRedis);
-        userRepository.save(user);
     }
 }
