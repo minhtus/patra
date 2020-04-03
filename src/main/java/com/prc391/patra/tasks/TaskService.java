@@ -188,64 +188,6 @@ public class TaskService {
         return taskResult && memberResult;
     }
 
-    /**
-     * The method for authorization
-     *
-     * @param returnObject
-     * @param method
-     * @return
-     */
-    private boolean isAuthorized(Task returnObject, String orgId, List<String> method) throws UnauthorizedException {
-        if (ObjectUtils.isEmpty(returnObject)) {
-            return false;
-        }
-        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
-        if (ObjectUtils.isEmpty(principal)) return false;
-        //check via currMemberIn JWT first
-        // if currMember in JWT cannot access current Task, get all Member to check
-        //get in redis first
-        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
-        if (optionalUserRedis.isPresent()) {
-            UserRedis userRedis = optionalUserRedis.get();
-            if (checkWithUserRedis(userRedis, returnObject, method)) {
-                return true;
-            }
-        } else {//user not exist in redis, get all Member in db
-            Optional<User> optionalUser = userRepository.findById(principal.getUsername());
-            if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
-                if (checkWithUserInDB(user, returnObject, method)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean checkWithCurrIdInJWT(String currMemberIdInJWT,
-                                         Task task, List<String> mode) {
-
-        if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInJWT)) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean checkWithUserRedis(UserRedis userRedis, Task task, List<String> mode) {
-        Map<String, String> orgPermissions = userRedis.getOrgPermissions();
-        if (mode.contains("1")) {
-            for (Map.Entry<String, String> orgPermission : orgPermissions.entrySet()) {
-                Member member = memberRepository.getByUsernameAndOrgId(userRedis.getUsername(), orgPermission.getKey());
-                if (task.getAssignee().contains(member.getMemberId())) return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean checkWithUserInDB(User user, Task task, List<String> mode) {
-        return true;
-    }
-
     private Sheet getSheetFromId(String id) throws EntityNotFoundException {
         return sheetRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
