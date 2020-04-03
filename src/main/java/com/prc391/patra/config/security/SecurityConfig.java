@@ -16,7 +16,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -89,37 +88,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         //temporary disable this to let anonymous use POST methods
         //re-enable it (delete this line) before going "production"
         http.csrf().disable();
-
         http.cors();
-
         http.authorizeRequests()
-
-                .antMatchers("/login").permitAll()
-
-        ;
-
-        http
-                //stateless: won't create cookie and won't use cookie
-                //applies for both session and cookie
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .enableSessionUrlRewriting(false)
-                .and()
-                .authorizeRequests()
-                //enter what url you want to exclude here, and it won't be authenticated by Spring security
-                //ex: login
-//                .antMatchers(HttpMethod.POST,"/api/login").permitAll()
-                //hope this will prevent login with GET
-//                .antMatchers(HttpMethod.GET,"/login").denyAll()
-
-                //let anonymous use API for easier developing
+                .antMatchers("/login").permitAll();
+        http.authorizeRequests()
                 .anyRequest()
-                .permitAll()
-        //uncomment the .authenticated and comment .permitAll to use security
-        //.authenticated()
+                .authenticated();
 
-//                .and()
-//                .httpBasic()
+        //stateless: won't create cookie and won't use cookie
+        //applies for both session and cookie
+        http.sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .enableSessionUrlRewriting(false);
         ;
 
         http

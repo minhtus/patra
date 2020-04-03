@@ -1,5 +1,6 @@
 package com.prc391.patra.config.security;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
@@ -39,28 +40,18 @@ public class PatraUserPrincipal implements UserDetails {
     private final boolean accountNonLocked;
     private final boolean credentialsNonExpired;
     private final boolean isEnabled;
-    private final String currMemberId;
     private final String jwt;
 
-    private final String email;
 
-    public PatraUserPrincipal(String username, String password, Collection<? extends GrantedAuthority> authorities, String email, String currMemberId, String jwt) {
+    public PatraUserPrincipal(String username,  Collection<? extends GrantedAuthority> authorities, String jwt) {
         this.username = username;
-        this.password = password;
         this.jwt = jwt;
         this.accountNonExpired = true;
         this.credentialsNonExpired = true;
         this.accountNonLocked = true;
         this.isEnabled = true;
         this.grantedAuthorities = Collections.unmodifiableSet(sortAuthorities(authorities));;
-        this.email = email;
-        this.currMemberId = currMemberId;
     }
-//
-//    public PatraUserPrincipal(String username, String password, String currMemberId, Collection<? extends GrantedAuthority> authorities) {
-//        super(username, password, authorities);
-//        this.currMemberId = currMemberId;
-//    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,6 +1,7 @@
 package com.prc391.patra.sheets;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.sheets.requests.CreateSheetRequest;
 import com.prc391.patra.tasks.Task;
 import org.modelmapper.ModelMapper;
@@ -25,7 +26,7 @@ public class SheetController {
     }
 
     @GetMapping("/byOrg/{id}")
-    public  ResponseEntity<List<Sheet>> getSheetByOrgID(@PathVariable("id") String orgID) throws  EntityNotFoundException{
+    public  ResponseEntity<List<Sheet>> getSheetByOrgID(@PathVariable("id") String orgID) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(sheetService.getSheetFromOrgID(orgID));
     }
 

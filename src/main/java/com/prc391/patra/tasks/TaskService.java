@@ -11,28 +11,23 @@ import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
-import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.PatraStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
     private final MemberRepository memberRepository;
@@ -41,23 +36,8 @@ public class TaskService {
     private final UserRepository userRepository;
     private final PermissionRepository permissionRepository;
 
-    private final Logger logger;
+    private static final Logger logger = Logger.getLogger("TaskServivce");
 
-    @Autowired
-    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository, UserRedisRepository userRedisRepository, UserRepository userRepository, PermissionRepository permissionRepository) {
-        this.taskRepository = taskRepository;
-        this.memberRepository = memberRepository;
-        this.sheetRepository = sheetRepository;
-        this.userRedisRepository = userRedisRepository;
-        this.userRepository = userRepository;
-        this.permissionRepository = permissionRepository;
-        this.logger = Logger.getLogger("TaskService");
-    }
-
-    //    @PostAuthorize("#Collections.contains(#Arrays.asList(#returnObject.assigneeMemberId), authentication.principal.currMemberId)")
-    //    @PostFilter(value = "filterObject.assignedMemberId == authentication.principal.currMemberId")
-
-    //    @PostAuthorize("returnObject.assignee.contains(authentication.principal.currMemberId)")
     Task getByTaskId(String taskId) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> result = taskRepository.findById(taskId);
         if (result.isPresent()) {
@@ -159,7 +139,7 @@ public class TaskService {
             logger.log(Level.WARNING, "AnonymousUser!");
             return false;
         }
-        Optional<Member> currMemberOptional = memberRepository.findById(((PatraUserPrincipal) authentication.getPrincipal()).getCurrMemberId());
+        Optional<Member> currMemberOptional = memberRepository.findById("");
         if (!currMemberOptional.isPresent()) {
             logger.log(Level.WARNING, "Current member does not exist in db!");
             throw new EntityNotFoundException("Current member does not exist in db!");
@@ -224,24 +204,20 @@ public class TaskService {
         PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
         if (ObjectUtils.isEmpty(principal)) return false;
         //check via currMemberIn JWT first
-        String currMemberIdInJWT = principal.getCurrMemberId();
-        if (checkWithCurrIdInJWT(currMemberIdInJWT, returnObject, method)) {
-            return true;
-        } else { //if currMember in JWT cannot access current Task, get all Member to check
-            //get in redis first
-            Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
-            if (optionalUserRedis.isPresent()) {
-                UserRedis userRedis = optionalUserRedis.get();
-                if (checkWithUserRedis(userRedis, returnObject, method)) {
+        // if currMember in JWT cannot access current Task, get all Member to check
+        //get in redis first
+        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
+        if (optionalUserRedis.isPresent()) {
+            UserRedis userRedis = optionalUserRedis.get();
+            if (checkWithUserRedis(userRedis, returnObject, method)) {
+                return true;
+            }
+        } else {//user not exist in redis, get all Member in db
+            Optional<User> optionalUser = userRepository.findById(principal.getUsername());
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                if (checkWithUserInDB(user, returnObject, method)) {
                     return true;
-                }
-            } else {//user not exist in redis, get all Member in db
-                Optional<User> optionalUser = userRepository.findById(principal.getUsername());
-                if (optionalUser.isPresent()) {
-                    User user = optionalUser.get();
-                    if (checkWithUserInDB(user, returnObject, method)) {
-                        return true;
-                    }
                 }
             }
         }
@@ -252,80 +228,26 @@ public class TaskService {
                                          Task task, List<String> mode) {
 
         if (!PatraStringUtils.isBlankAndEmpty(currMemberIdInJWT)) {
-            if (detailedAuthorization(task, currMemberIdInJWT, mode, null)) return true;
+            return true;
         }
         return false;
     }
 
     private boolean checkWithUserRedis(UserRedis userRedis, Task task, List<String> mode) {
-        List<String> memberIdsInRedis = userRedis.getMemberIds();
-        if (CollectionUtils.isEmpty(memberIdsInRedis)) return false;
-        for (String memberIdInRedis : memberIdsInRedis) {
-            if (detailedAuthorization(task, memberIdInRedis, mode, userRedis)) return true;
-        }
-        return false;
+        //TODO dummy test
+        return true;
     }
 
     private boolean checkWithUserInDB(User user, Task task, List<String> mode) {
-        List<String> userMemberList = memberRepository.getAllByUsername(user.getUsername()).stream()
-                .map(member -> member.getMemberId()).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(userMemberList)) return false;
-        for (String userMember : userMemberList) {
-            if (detailedAuthorization(task, userMember, mode, null)) return true;
-        }
-        return false;
+        return true;
     }
 
-    /**
-     * Each method have different authorization business, use mode param to determine which method is running
-     * @param task used to get organization (from sheet), get assigneeId list
-     * @param currMemberId can be currMemberIdInJWT, currMemberIdInRedis, currMemberIdInDB
-     * @param mode 1 for getTaskById, 5 for changeTaskStatus
-     * @param userRedis if provided, then new user in redis will be updated
-     * @return
-     */
-    private boolean detailedAuthorization(Task task, String currMemberId, List<String> mode, UserRedis userRedis) {
-        Sheet sheet = getSheetFromId(task.getSheetId());
-        if (ObjectUtils.isEmpty(sheet)) return false;
-        Member currMember = getMemberFromId(currMemberId);
-        if (ObjectUtils.isEmpty(currMember)) {
-            return false;
-        }
-
-        if (mode.contains("1")) {//get task
-            if (sheet.getOrgId().equalsIgnoreCase(currMember.getOrgId())) {
-                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
-                return true;
-            }
-        }
-        if (mode.contains("5")) {//set task done/undone
-            //is assigned
-            if (task.getAssignee().contains(currMemberId)) {
-                //permission: MEMBER_EDIT, MEMBER_WRITE
-                List<String> permissions = permissionRepository.getByIdIn(Arrays.asList(currMember.getPermissions())).stream()
-                        .map(permission -> permission.getName()).collect(Collectors.toList());
-                List<String> requiredPermissions = Arrays.asList("MEMBER_EDIT", "MEMBER_WRITE");
-                if (!ObjectUtils.isEmpty(userRedis)) setNewCurrMemberIdInRedis(userRedis, currMemberId);
-                return permissionChecker(permissions, requiredPermissions);
-            }
-        }
-        return false;
+    private Sheet getSheetFromId(String id) throws EntityNotFoundException {
+        return sheetRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 
-    private Sheet getSheetFromId(String id) {
-        Optional<Sheet> optionalSheet = sheetRepository.findById(id);
-        if (optionalSheet.isPresent()) {
-            return optionalSheet.get();
-        }
-        return null;
-    }
-
-    private Member getMemberFromId(String id) {
-        Optional<Member> optionalMember = memberRepository.findById(id);
-        if (optionalMember.isPresent()) {
-            return optionalMember.get();
-        }
-        return null;
+    private Member getMemberFromId(String id) throws EntityNotFoundException {
+        return memberRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 
     private boolean permissionChecker(List<String> userPermissions, List<String> requiredPermissions) {
@@ -339,8 +261,6 @@ public class TaskService {
     }
 
     private void setNewCurrMemberIdInRedis(UserRedis userRedis, String newCurrMemberId) {
-        userRedisRepository.deleteById(userRedis.getUsername());
-        userRedis.setCurrMemberId(newCurrMemberId);
         userRedisRepository.save(userRedis);
     }
 }
