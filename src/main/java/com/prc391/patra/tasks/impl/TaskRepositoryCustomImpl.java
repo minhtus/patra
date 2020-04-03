@@ -34,4 +34,11 @@ public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
                 new Update().pullAll("assignee", memberIds.toArray()), Task.class);
         return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
+
+    @Override
+    public boolean updateAttachImage(String taskId, String imagePath) {
+        UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
+                new Update().push("attach_image_path", imagePath), Task.class);
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
+    }
 }

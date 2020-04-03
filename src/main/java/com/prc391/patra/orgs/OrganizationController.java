@@ -31,6 +31,11 @@ public class OrganizationController {
         this.mapper = mapper;
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Organization>> getAllOrg() {
+        return ResponseEntity.ok(organizationService.getAllOrg());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Organization> getOrganization(
             @PathVariable("id") String id
