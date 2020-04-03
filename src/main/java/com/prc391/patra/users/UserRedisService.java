@@ -19,4 +19,13 @@ public class UserRedisService {
     public UserRedis getUserRedis(String username) throws EntityNotFoundException {
         return userRedisRepository.findById(username).orElseThrow(EntityNotFoundException::new);
     }
+
+    public boolean deleteUserInRedis(String username) {
+        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(username);
+        if (!optionalUserRedis.isPresent()) {
+            return false;
+        }
+        userRedisRepository.deleteById(username);
+        return true;
+    }
 }
