@@ -22,6 +22,10 @@ public class OrganizationService {
         this.memberRepository = memberRepository;
     }
 
+    public List<Organization> getAllOrg() {
+        return organizationRepository.findAll();
+    }
+
     public Organization getOrganization(String id) throws EntityNotFoundException {
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
         if (!optionalOrg.isPresent()) {
