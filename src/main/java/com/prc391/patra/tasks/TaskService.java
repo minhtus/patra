@@ -187,26 +187,4 @@ public class TaskService {
         memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
         return taskResult && memberResult;
     }
-
-    private Sheet getSheetFromId(String id) throws EntityNotFoundException {
-        return sheetRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-    }
-
-    private Member getMemberFromId(String id) throws EntityNotFoundException {
-        return memberRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-    }
-
-    private boolean permissionChecker(List<String> userPermissions, List<String> requiredPermissions) {
-        if (CollectionUtils.isEmpty(userPermissions) || CollectionUtils.isEmpty(requiredPermissions)) {
-            return false;
-        }
-        for (String requiredPermission : requiredPermissions) {
-            if (userPermissions.contains(requiredPermission)) return true;
-        }
-        return false;
-    }
-
-    private void setNewCurrMemberIdInRedis(UserRedis userRedis, String newCurrMemberId) {
-        userRedisRepository.save(userRedis);
-    }
 }
