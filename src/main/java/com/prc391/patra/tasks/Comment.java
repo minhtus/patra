@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Comment {
     private String commentId;
     private String username;
+    private String memberId;
     private String comment;
     private String[] imagesPath;
 }
