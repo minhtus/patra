@@ -187,4 +187,10 @@ public class TaskService {
         memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
         return taskResult && memberResult;
     }
+
+    public boolean attachImage(String taskId, String imagePath) throws EntityNotFoundException {
+        if (taskRepository.existsById(taskId))
+            throw new EntityNotFoundException();
+        return taskRepository.updateAttachImage(taskId, imagePath);
+    }
 }
