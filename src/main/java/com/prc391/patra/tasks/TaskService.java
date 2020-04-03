@@ -1,6 +1,7 @@
 package com.prc391.patra.tasks;
 
 import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
@@ -12,6 +13,7 @@ import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.users.permission.PermissionRepository;
+import com.prc391.patra.utils.AuthorizationUtils;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.PatraStringUtils;
 import lombok.AllArgsConstructor;
@@ -24,7 +26,6 @@ import org.springframework.util.ObjectUtils;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -34,16 +35,23 @@ public class TaskService {
     private final SheetRepository sheetRepository;
     private final UserRedisRepository userRedisRepository;
     private final UserRepository userRepository;
-    private final PermissionRepository permissionRepository;
+    private final AuthorizationUtils authorizationUtils;
 
     private static final Logger logger = Logger.getLogger("TaskServivce");
 
     Task getByTaskId(String taskId) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> result = taskRepository.findById(taskId);
         if (result.isPresent()) {
-            if (!isAuthorized(result.get(), Arrays.asList("1"))) {
-                throw new UnauthorizedException("Unauthorized");
+            Task task = result.get();
+            Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+
+            if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.READ_ACCESS)) {
+                throw new UnauthorizedException("You don't have permission to access this resource");
             }
+
+//            if (!isAuthorized(result.get(), sheet.getOrgId(), Arrays.asList("1"))) {
+//                throw new UnauthorizedException("Unauthorized");
+//            }
             return result.get();
         } else {
             throw new EntityNotFoundException();
@@ -66,12 +74,26 @@ public class TaskService {
         return result;
     }
 
-    public Task insertTask(Task task) throws EntityNotFoundException {
+    public Task insertTask(Task task) throws EntityNotFoundException, UnauthorizedException {
         Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
         if (!optionalSheet.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
         }
-        return taskRepository.save(task);
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        //write reporter MemberId
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
+        UserRedis userRedis = optionalUserRedis.get();
+        Member member = memberRepository.getByUsernameAndOrgId(userRedis.getUsername(), sheet.getOrgId());
+        //save the task to get Task's id, so that reporter can be added into assignee list
+        Task createdTask = taskRepository.save(task);
+        createdTask.setReporter(member.getMemberId());
+        createdTask.setAssignee(Arrays.asList(member.getMemberId()));
+        memberRepository.updateAssignedTask(member.getMemberId(), Arrays.asList(createdTask.getTaskId()));
+        return taskRepository.save(createdTask);
     }
 
     Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException {
@@ -98,10 +120,15 @@ public class TaskService {
         if (!optionalTask.isPresent()) {
             throw new EntityNotFoundException("Task not exist");
         }
-
         Task task = optionalTask.get();
-        if (!isAuthorized(task, Arrays.asList("5"))) {
-            throw new UnauthorizedException("Unauthorized");
+        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.WRITE_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        Member member = memberRepository.getByUsernameAndOrgId(ControllerSupportUtils.getPatraPrincipal().getUsername(), sheet.getOrgId());
+        if (!task.getAssignee().contains(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
         }
         task.setStatusId(status.getStatusId());
         taskRepository.save(task);
@@ -197,7 +224,7 @@ public class TaskService {
      * @param method
      * @return
      */
-    private boolean isAuthorized(Task returnObject, List<String> method) throws UnauthorizedException {
+    private boolean isAuthorized(Task returnObject, String orgId, List<String> method) throws UnauthorizedException {
         if (ObjectUtils.isEmpty(returnObject)) {
             return false;
         }
@@ -234,8 +261,14 @@ public class TaskService {
     }
 
     private boolean checkWithUserRedis(UserRedis userRedis, Task task, List<String> mode) {
-        //TODO dummy test
-        return true;
+        Map<String, String> orgPermissions = userRedis.getOrgPermissions();
+        if (mode.contains("1")) {
+            for (Map.Entry<String, String> orgPermission : orgPermissions.entrySet()) {
+                Member member = memberRepository.getByUsernameAndOrgId(userRedis.getUsername(), orgPermission.getKey());
+                if (task.getAssignee().contains(member.getMemberId())) return true;
+            }
+        }
+        return false;
     }
 
     private boolean checkWithUserInDB(User user, Task task, List<String> mode) {

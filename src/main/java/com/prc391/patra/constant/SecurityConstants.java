@@ -11,4 +11,5 @@ public class SecurityConstants {
     public static final String HEADER_STRING = "Authorization";
     public static final String WRITE_ACCESS = "WRITE";
     public static final String READ_ACCESS = "READ";
+    public static final String ADMIN_ACCESS = "ADMIN";
 }

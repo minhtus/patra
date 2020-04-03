@@ -32,7 +32,10 @@ public class AuthorizationUtils {
             return false;
         if (permission.equals(requestAccess))
             return true;
-        if (permission.equals(SecurityConstants.WRITE_ACCESS) && requestAccess.equals(SecurityConstants.READ_ACCESS))
+        if (SecurityConstants.ADMIN_ACCESS.equals(permission)) { //admin access all
+            return true;
+        }
+        if (SecurityConstants.WRITE_ACCESS.equals(permission) && SecurityConstants.READ_ACCESS.equals(requestAccess))
             return true;
         return false;
     }
