@@ -24,6 +24,7 @@ public class Task {
     private int statusId;
     private long dueDate;
     private Comment[] comments;
+    private String attachImagePath;
 
     void mergeForUpdate(Task other) {
         this.taskName = other.taskName != null ? other.taskName : this.taskName;
