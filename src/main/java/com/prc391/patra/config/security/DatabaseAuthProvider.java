@@ -6,11 +6,7 @@ import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
-import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
-import com.prc391.patra.users.role.Role;
-import com.prc391.patra.users.role.RoleRepository;
-import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -32,7 +28,6 @@ import java.util.stream.Collectors;
 public class DatabaseAuthProvider implements AuthenticationProvider {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,9 +35,8 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
     private final ModelMapper mapper;
 
     @Autowired
-    public DatabaseAuthProvider(UserRepository userRepository, RoleRepository roleRepository, PermissionRepository permissionRepository, MemberRepository memberRepository, UserRedisRepository userRedisRepository, ModelMapper mapper) {
+    public DatabaseAuthProvider(UserRepository userRepository, PermissionRepository permissionRepository, MemberRepository memberRepository, UserRedisRepository userRedisRepository, ModelMapper mapper) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.memberRepository = memberRepository;
         this.userRedisRepository = userRedisRepository;
@@ -112,44 +106,4 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         }
         return authorities;
     }
-
-    /**
-     * lay cac authority (cac permission) de phuc vu cho viec phan quyen trong @PreAuthorize
-     *
-     * @param rolesId List id cua role ma User so huu
-     * @return cac permission da duoc bien thanh kieu SimpleGrantedAuthority
-     */
-    @Deprecated
-    private Collection<? extends GrantedAuthority> getAuthorities(Collection<Long> rolesId) {
-        List<Role> roles = new ArrayList<>();
-        for (Long id : rolesId) {
-            roles.add(roleRepository.findById(id).get());
-        }
-        return getGrantedAuthorities(getPermissions(roles));
-    }
-
-    /**
-     * Get all permission in Role (deprecated)
-     *
-     * @param roles roles can lay permission
-     * @return List ten cua permission
-     */
-    @Deprecated
-    private List<String> getPermissions(Collection<Role> roles) {
-        List<String> privileges = new ArrayList<>();
-        List<Permission> permissionsList = new ArrayList<>();
-        List<Long> privIdList = new ArrayList<>();
-        for (Role role : roles) {
-            privIdList = role.getPermissions();
-            for (Long id : privIdList) {
-                permissionsList.add(permissionRepository.findById(id).get());
-            }
-        }
-        for (Permission item : permissionsList) {
-            privileges.add(item.getName());
-        }
-        return privileges;
-    }
-
-
 }
