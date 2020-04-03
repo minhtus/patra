@@ -5,15 +5,11 @@ import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
-import com.prc391.patra.users.permission.Permission;
-import com.prc391.patra.users.permission.PermissionRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +19,6 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
-    private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
 
     public Member getMember(String memberId) throws EntityNotFoundException {
