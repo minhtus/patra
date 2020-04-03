@@ -10,7 +10,7 @@ public class MemberResponse {
     private String memberId;
     private String orgId;
     private String username;
-    private Long[] permissions;
+    private String permission;
     private List<String> assignedTaskId;
     private Organization organization;
 }

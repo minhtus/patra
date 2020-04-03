@@ -44,14 +44,9 @@ public class TaskService {
         if (result.isPresent()) {
             Task task = result.get();
             Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
-
             if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.READ_ACCESS)) {
                 throw new UnauthorizedException("You don't have permission to access this resource");
             }
-
-//            if (!isAuthorized(result.get(), sheet.getOrgId(), Arrays.asList("1"))) {
-//                throw new UnauthorizedException("Unauthorized");
-//            }
             return result.get();
         } else {
             throw new EntityNotFoundException();
@@ -85,9 +80,9 @@ public class TaskService {
         }
         //write reporter MemberId
         PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
-        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
-        UserRedis userRedis = optionalUserRedis.get();
-        Member member = memberRepository.getByUsernameAndOrgId(userRedis.getUsername(), sheet.getOrgId());
+//        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
+//        UserRedis userRedis = optionalUserRedis.get();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
         //save the task to get Task's id, so that reporter can be added into assignee list
         Task createdTask = taskRepository.save(task);
         createdTask.setReporter(member.getMemberId());
@@ -96,23 +91,53 @@ public class TaskService {
         return taskRepository.save(createdTask);
     }
 
-    Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException {
+    Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> optionalTask = taskRepository.findById(taskId);
         if (!optionalTask.isPresent()) {
             throw new EntityNotFoundException("Task not exist");
         }
         Task task = optionalTask.get();
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
+        }
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)){
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        if (!task.getReporter().equals(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         task.mergeForUpdate(updateTask);
         return taskRepository.save(task);
     }
 
-    void deleteTask(String taskId) throws EntityNotFoundException {
-        boolean exist = taskRepository.existsById(taskId);
-        if (exist) {
-            taskRepository.deleteById(taskId);
-        } else {
+    void deleteTask(String taskId) throws EntityNotFoundException, UnauthorizedException {
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
             throw new EntityNotFoundException();
         }
+        Task task = optionalTask.get();
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
+        }
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)){
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        if (!task.getReporter().equals(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        //remove assign information
+        List<String> oldAssigneeIds = task.getAssignee();
+        taskRepository.removeAssignee(taskId, oldAssigneeIds);
+        memberRepository.removeAssignedTask(oldAssigneeIds, Arrays.asList(taskId));
+        taskRepository.deleteById(taskId);
     }
 
     public Task changeTaskStatus(String taskId, RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
