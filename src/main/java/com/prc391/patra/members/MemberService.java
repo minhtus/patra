@@ -7,6 +7,7 @@ import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -17,20 +18,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@AllArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
-
-    @Autowired
-    public MemberService(MemberRepository memberRepository, OrganizationRepository organizationRepository, PermissionRepository permissionRepository, UserRepository userRepository) {
-        this.memberRepository = memberRepository;
-        this.organizationRepository = organizationRepository;
-        this.permissionRepository = permissionRepository;
-        this.userRepository = userRepository;
-    }
 
     public Member getMember(String memberId) throws EntityNotFoundException {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
@@ -52,8 +46,7 @@ public class MemberService {
 
     public Member insertMember(Member newMember) throws EntityNotFoundException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
-        || ObjectUtils.isEmpty(newMember.getUsername())
-        || ObjectUtils.isEmpty(newMember.getPermissions())) {
+        || ObjectUtils.isEmpty(newMember.getUsername())) {
             throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissionIds) not found!");
         }
         validateMember(newMember);
@@ -104,16 +97,6 @@ public class MemberService {
                     throw new EntityNotFoundException("User with username " + member.getUsername() + " not exist!");
                 }
             }
-            //only check if the permission ids is provided. Skip if not provided
-            if (!ObjectUtils.isEmpty(member.getPermissions())) {
-                List<Permission> permissions = permissionRepository.getByIdIn(Arrays.asList(member.getPermissions()));
-                for (Long permissionId : member.getPermissions()) {
-                    if (!permissions.stream().anyMatch(permission -> permission.getId() == permissionId)) {
-                        throw new EntityNotFoundException("Permission with id " + permissionId + " not exist!");
-                    }
-                }
-            }
-
         }
 
     }

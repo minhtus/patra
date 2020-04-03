@@ -14,6 +14,8 @@ import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.requests.ChangePassRequest;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import com.prc391.patra.utils.PatraStringUtils;
+import com.prc391.patra.users.role.RoleRepository;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,6 +34,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -41,18 +44,6 @@ class UserService {
     private final UserRedisRepository userRedisRepository;
     private final ModelMapper mapper;
     private final JwtRedisRepository jwtRedisRepository;
-
-    @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, MemberRepository memberRepository, OrganizationRepository organizationRepository, UserRedisRepository userRedisRepository, ModelMapper mapper, JwtRedisRepository jwtRedisRepository) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-//        this.roleRepository = roleRepository;
-        this.memberRepository = memberRepository;
-        this.organizationRepository = organizationRepository;
-        this.userRedisRepository = userRedisRepository;
-        this.mapper = mapper;
-        this.jwtRedisRepository = jwtRedisRepository;
-    }
 
     public User registerUser(User newUserInfo) throws EntityExistedException {
         if (ObjectUtils.isEmpty(newUserInfo)) {
@@ -134,25 +125,6 @@ class UserService {
         return memberResponses;
     }
 
-    public void updateCurrMemberId(String username, String currMemberId) throws EntityNotFoundException, InvalidInputException {
-        Optional<User> optionalUser = userRepository.findById(username);
-        if (!optionalUser.isPresent()) {
-            throw new EntityNotFoundException("User " + username + " not found");
-        }
-        User user = optionalUser.get();
-        if (user.getCurrMemberId().equalsIgnoreCase(currMemberId)) {
-            throw new InvalidInputException("New currMemId is the same as old currMemId!");
-        }
-        Optional<Member> optionalMember = memberRepository.findById(currMemberId);
-        if (!optionalMember.isPresent()) {
-            throw new EntityNotFoundException("Member " + currMemberId + " is not exist");
-        }
-        user.setCurrMemberId(currMemberId);
-        //change curr-member-id, overall memberIds of user is not changed
-        //but if the memberIds is not presisted, it will lost
-        updateUserInRedis(user);
-    }
-
     public boolean changePassword(ChangePassRequest changePassRequest) throws UnauthorizedException, EntityNotFoundException {
         if (ObjectUtils.isEmpty(changePassRequest)) {
             throw new EntityNotFoundException("ChangePassRequest is empty");
@@ -184,7 +156,7 @@ class UserService {
         userRedisRepository.deleteById(user.getUsername());
         UserRedis userRedis = mapper.map(user, UserRedis.class);
         List<Member> memberList = memberRepository.getAllByUsername(user.getUsername());
-        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
+//        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
         userRedisRepository.save(userRedis);
         userRepository.save(user);
     }

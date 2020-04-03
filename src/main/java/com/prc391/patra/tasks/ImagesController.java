@@ -1,8 +1,11 @@
 package com.prc391.patra.tasks;
 
+import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.utils.S3Service;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,21 +18,30 @@ import java.io.IOException;
 @AllArgsConstructor
 public class ImagesController {
     private final S3Service s3Service;
+    private final TaskService taskService;
+    private static final String IMAGES_CONTEXT_PATH = "/api/v0/images/";
 
     @PostMapping
-    public void uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
-        //TODO write db and hold file path
-        s3Service.upload(file);
+    public void uploadImage(@RequestParam("file") MultipartFile file,
+                            @RequestParam(value = "taskId") String taskId) throws IOException, EntityNotFoundException {
+        // TODO check file type
+        String resourceName = s3Service.upload(file);
+        boolean result = taskService.attachImage(taskId, IMAGES_CONTEXT_PATH + resourceName);
+        if (result) {
+            ResponseEntity.ok().build();
+        } else {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    @GetMapping("/{url}")
-    public ResponseEntity<InputStreamResource> downloadImage(@PathVariable("url") String resourceUrl) throws IOException {
-        //TODO get filename and authorize
-        String filename = "//TODO";
-        InputStreamResource inputStreamResource = new InputStreamResource(s3Service.download(resourceUrl));
-        return ResponseEntity.ok().header("Content-Disposition", "attachment; filename=" + filename)
+    @GetMapping("/{resource}")
+    public ResponseEntity<InputStreamResource> downloadImage(@PathVariable("resource") String resourceName) throws IOException {
+        String filename = resourceName.substring(resourceName.lastIndexOf("_") + 1);
+        Resource resource = s3Service.download(resourceName);
+        return ResponseEntity.ok().header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.IMAGE_PNG)
-                .body(inputStreamResource);
+                .contentLength(resource.contentLength())
+                .body(new InputStreamResource(resource.getInputStream()));
     }
 
 }

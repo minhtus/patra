@@ -17,26 +17,15 @@ public class UserRedisService {
     }
 
     public UserRedis getUserRedis(String username) throws EntityNotFoundException {
-        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(username);
-        if (!optionalUserRedis.isPresent()) {
-            throw new EntityNotFoundException("User not found in redis");
-        }
-        return optionalUserRedis.get();
+        return userRedisRepository.findById(username).orElseThrow(EntityNotFoundException::new);
     }
 
-    public String getCurrMemberIdInRedis(String username) throws EntityNotFoundException {
+    public boolean deleteUserInRedis(String username) {
         Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(username);
         if (!optionalUserRedis.isPresent()) {
-            throw new EntityNotFoundException("User not found in redis");
+            return false;
         }
-        return optionalUserRedis.get().getCurrMemberId();
-    }
-
-    public List<String> getMemberIdsInRedis(String username) throws EntityNotFoundException {
-        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(username);
-        if (!optionalUserRedis.isPresent()) {
-            throw new EntityNotFoundException("User not found in redis");
-        }
-        return optionalUserRedis.get().getMemberIds();
+        userRedisRepository.deleteById(username);
+        return true;
     }
 }

@@ -10,7 +10,7 @@ import com.prc391.patra.users.permission.Permission;
 import com.prc391.patra.users.permission.PermissionRepository;
 import com.prc391.patra.users.role.Role;
 import com.prc391.patra.users.role.RoleRepository;
-import com.prc391.patra.utils.PatraStringUtils;
+import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -23,17 +23,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 //From JWTLoginFilter to DatabaseAuthProvider
@@ -41,17 +32,11 @@ import java.util.stream.Collectors;
 public class DatabaseAuthProvider implements AuthenticationProvider {
 
     private final UserRepository userRepository;
-
     private final RoleRepository roleRepository;
-
     private final PermissionRepository permissionRepository;
-
     private final MemberRepository memberRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final UserRedisRepository userRedisRepository;
-
     private final ModelMapper mapper;
 
     @Autowired
@@ -67,81 +52,37 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        // Username or email
         String username = authentication.getName();
-
-        String email = ((PatraUserPrincipal) authentication.getPrincipal()).getEmail();
-        if (ObjectUtils.isEmpty(authentication.getCredentials())) {
-            throw new BadCredentialsException("Credentials is null");
-        }
         String password = authentication.getCredentials().toString();
+        User user = getLogin(username);
 
-        //login using username or email
-        User user = null;
-        if (!PatraStringUtils.isBlankAndEmpty(username)) {
-            Optional<User> optionalUser = userRepository.findById(username);
-            if (optionalUser.isPresent()) {
-                user = optionalUser.get();
-            }
-        } else if (!PatraStringUtils.isBlankAndEmpty(email)) {
-            user = userRepository.getUserByEmail(email);
-        } else {
-            throw new BadCredentialsException("Something wrong here");
-        }
-
-
-        //dung config file cho dong thong bao, nhac de khoi quen
         if (user == null) {
-            throw new BadCredentialsException
-                    ("(username or email (or password) not valid message, use config file instead of hardcoding)");
-        }
-        if (PatraStringUtils.isBlankAndEmpty(password)) {
-            throw new BadCredentialsException(
-                    "password is empty"
-            );
+            throw new BadCredentialsException("Invalid credentials");
         }
         if (!passwordEncoder.matches(password, user.getPassHash())) {
-            throw new BadCredentialsException
-                    ("(password (or username) not valid message, use config file instead of hard coding");
+            throw new BadCredentialsException("Invalid credentials");
         }
         if (!user.isEnabled()) {
-            throw new BadCredentialsException
-                    ("(user is disabled message, use config file instead of hard coding");
+            throw new BadCredentialsException("User account is disabled");
         }
 
-        //Get current working Member, then get the Member's permissions
-
-        //save user into redis
-        userRedisRepository.deleteById(user.getUsername());
         UserRedis userRedis = mapper.map(user, UserRedis.class);
-        //get all member ids
-        List<String> memberIds = memberRepository.getAllByUsername(user.getUsername()).stream()
-                .map(member -> member.getMemberId()).collect(Collectors.toList());
-        userRedis.setMemberIds(memberIds);
-//        List<Member> memberList = memberRepository.getAllByUsername(user.getUsername());
-//        userRedis.setMemberIds(memberList.stream().map(member -> member.getMemberId()).collect(Collectors.toList()));
+        Map<String, String> orgPermission = memberRepository.getAllByUsername(user.getUsername()).stream()
+                .collect(Collectors.toMap(Member::getOrgId, Member::getPermission));
+        userRedis.setOrgPermissions(orgPermission);
         userRedisRepository.save(userRedis);
-        String currMemberId = user.getCurrMemberId();
-        Collection<? extends GrantedAuthority> authorities = null;
-        if (!PatraStringUtils.isBlankAndEmpty(currMemberId)) {
-            Optional<Member> currMember = memberRepository.findById(currMemberId);
-            if (currMember.isPresent()) {
-                Member member = currMember.get();
-                authorities = getAuthoritiesForPermission(Arrays.asList(member.getPermissions()));
-            }
-        }
-//        authorities = new HashSet<>();
-        //use username and email got from user to build Principal, because passed username/email may be null
-        String loggedInUsername = user.getUsername();
-        String loggedInEmail = user.getEmail();
-        PatraUserPrincipal principal = new PatraUserPrincipal(loggedInUsername, password,
-                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities, loggedInEmail
-                , currMemberId == null ? "" : currMemberId, null);
+        PatraUserPrincipal principal = new PatraUserPrincipal(user.getUsername(), Collections.emptyList(), null);
+        return new UsernamePasswordAuthenticationToken(principal, password);
+    }
 
-        return new UsernamePasswordAuthenticationToken(
-                principal,
-                username,
-                CollectionUtils.isEmpty(authorities) ? new HashSet<>() : authorities
-        );
+    private User getLogin(String usernameOrEmail) {
+        if (usernameOrEmail.contains("@")) {
+            return userRepository.getUserByEmail(usernameOrEmail);
+        } else {
+            return userRepository.findById(usernameOrEmail)
+                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+        }
     }
 
     @Override

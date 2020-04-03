@@ -15,13 +15,13 @@ public class Member {
     private String memberId;
     private String orgId;
     private String username;
-    private Long[] permissions;
+    private String permission;
     private List<String> assignedTaskId;
 
     public void mergeToUpdate(Member other) {
         this.memberId = other.memberId != null ? other.memberId :  this.memberId;
         this.orgId = other.orgId != null ? other.orgId : this.orgId;
         this.username = other.username != null ? other.username : this.username;
-        this.permissions = other.permissions != null ? other.permissions : this.permissions;
+        this.permission = other.permission != null ? other.permission : this.permission;
     }
 }
