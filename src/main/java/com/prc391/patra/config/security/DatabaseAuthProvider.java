@@ -6,7 +6,6 @@ import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
-import com.prc391.patra.users.permission.PermissionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -28,16 +27,14 @@ import java.util.stream.Collectors;
 public class DatabaseAuthProvider implements AuthenticationProvider {
 
     private final UserRepository userRepository;
-    private final PermissionRepository permissionRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRedisRepository userRedisRepository;
     private final ModelMapper mapper;
 
     @Autowired
-    public DatabaseAuthProvider(UserRepository userRepository, PermissionRepository permissionRepository, MemberRepository memberRepository, UserRedisRepository userRedisRepository, ModelMapper mapper) {
+    public DatabaseAuthProvider(UserRepository userRepository, MemberRepository memberRepository, UserRedisRepository userRedisRepository, ModelMapper mapper) {
         this.userRepository = userRepository;
-        this.permissionRepository = permissionRepository;
         this.memberRepository = memberRepository;
         this.userRedisRepository = userRedisRepository;
         this.mapper = mapper;
@@ -82,15 +79,6 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
     @Override
     public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
-    }
-
-    private Collection<? extends GrantedAuthority> getAuthoritiesForPermission(
-            Collection<Long> permissionIds) {
-        List<String> permissions = new ArrayList<>();
-        for (Long id : permissionIds) {
-            permissions.add(permissionRepository.findById(id).get().getName());
-        }
-        return getGrantedAuthorities(permissions);
     }
 
     /**

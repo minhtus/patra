@@ -10,13 +10,11 @@ import com.prc391.patra.jwt.JwtRedisService;
 import com.prc391.patra.members.MemberService;
 import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
-import com.prc391.patra.users.permission.PermissionService;
 import com.prc391.patra.users.requests.ChangePassRequest;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import com.prc391.patra.utils.JWTUtils;
 import com.prc391.patra.utils.PatraStringUtils;
 import lombok.AllArgsConstructor;
-import org.apache.http.client.methods.HttpHead;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,7 +39,6 @@ public class UserController {
     private final UserService userService;
     private final ModelMapper mapper;
     private final MemberService memberService;
-    private final PermissionService permissionService;
     private final JwtRedisService jwtRedisService;
 
     @GetMapping("/{username}")
