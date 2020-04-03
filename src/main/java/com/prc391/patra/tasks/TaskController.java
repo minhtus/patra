@@ -30,7 +30,7 @@ public class TaskController {
     private final JwtRedisService jwtRedisService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTask(@PathVariable("id") String taskId, @AuthenticationPrincipal Jwt principle) throws EntityNotFoundException, UnauthorizedException {
+    public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
         Task task = taskService.getByTaskId(taskId);
         return ResponseEntity.ok(task);
     }
@@ -54,7 +54,7 @@ public class TaskController {
     @PatchMapping("/{id}/assignees")
     public ResponseEntity assignTask(@PathVariable("id") String taskId,
                                      @RequestParam(required = false) List<String> memberIds)
-            throws EntityNotFoundException {
+            throws EntityNotFoundException, UnauthorizedException {
         boolean result = taskService.assignToTask(taskId, memberIds);
         if (result) {
             return ResponseEntity.ok().build();

@@ -136,7 +136,7 @@ public class TaskService {
     }
 
     boolean assignToTask(String taskId, List<String> requestedMemberIds)
-            throws EntityNotFoundException {
+            throws EntityNotFoundException, UnauthorizedException {
         //TODO check user before add
         Optional<Task> optionalTask = taskRepository.findById(taskId);
         if (!optionalTask.isPresent()) {
@@ -145,42 +145,13 @@ public class TaskService {
         Task task = optionalTask.get();
         Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
         if (ObjectUtils.isEmpty(sheet)) {
-            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
+            throw new EntityNotFoundException("Task does not belong to a sheet. Check the assignToTask() method in TaskService!");
+        }
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
         }
         if (CollectionUtils.isEmpty(requestedMemberIds)) {
             requestedMemberIds = new ArrayList<>();
-        }
-        //get currentMember's Member entity
-        //can't use PreAuthorize and PostAuthorize because the param does not contains
-        //org info, the return value is boolean which does not contain org info,
-        //need to get org info from repository, which Pre/PostAuthorize cannot do
-        //check in code instead
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (ObjectUtils.isEmpty(authentication)) {
-            //less likely to happen
-            logger.log(Level.WARNING, "Authentication is empty");
-            return false;
-        }
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof PatraUserPrincipal)) {
-            logger.log(Level.WARNING, "AnonymousUser!");
-            return false;
-        }
-        Optional<Member> currMemberOptional = memberRepository.findById("");
-        if (!currMemberOptional.isPresent()) {
-            logger.log(Level.WARNING, "Current member does not exist in db!");
-            throw new EntityNotFoundException("Current member does not exist in db!");
-
-        }
-        //end get currMember's Member entity
-
-        //check currMember's orgId vs sheet's orgId
-        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
-            // throw new ForbiddenException()
-            logger.log(Level.WARNING, "Current Member's organization_id: "
-                    + currMemberOptional.get().getOrgId() +
-                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
-            return false;
         }
 
         //validate each requestedMemberId:
