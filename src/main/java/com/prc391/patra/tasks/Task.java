@@ -10,7 +10,6 @@ import java.util.List;
 
 @Document
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Task {
     @Id
     private String taskId;
