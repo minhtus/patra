@@ -3,7 +3,6 @@ package com.prc391.patra.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -13,25 +12,24 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 @Configuration
 @EnableRedisRepositories
 public class RedisConfig {
-//
+
     @Value("${spring.redis.host}")
     private String redisHost;
-//
+
     @Value("${spring.redis.port}")
     private int redisPort;
 
-    @Value("${spring.redis.password}")
+    @Value("${spring.redis.password: #{null}}")
     private String redisPassword;
 
 
     @Bean
     JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration(redisHost, redisPort);
-        RedisPassword redisPasswordObj = RedisPassword.of(redisPassword);
-        configuration.setPassword(redisPasswordObj);
-        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(configuration);
-//        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
-        return jedisConnectionFactory;
+        if (redisPassword != null) {
+            configuration.setPassword(RedisPassword.of(redisPassword));
+        }
+        return new JedisConnectionFactory(configuration);
     }
 
     @Bean

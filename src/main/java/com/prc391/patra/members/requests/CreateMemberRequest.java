@@ -6,6 +6,5 @@ import lombok.Data;
 public class CreateMemberRequest {
     private String orgId;
     private String username;
-    private Long[] permissions;
-    private String[] assignedTaskId;
+    private String permission;
 }
