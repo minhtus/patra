@@ -42,7 +42,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     public Authentication getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(SecurityConstants.HEADER_STRING);
         try {
-            if (token != null) {
+            if (!PatraStringUtils.isBlankAndEmpty(token)) {
                 if (!jwtRedisService.isExistInBlacklist(token)) {
                     Claims body = JWTUtils.getClaimsBodyFromJWT(token);
                     List<String> authorities = body.get(SecurityConstants.JWT_CLAIMS_AUTHORITY, List.class);
@@ -54,7 +54,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     return !PatraStringUtils.isBlankAndEmpty(username) ?
                             new UsernamePasswordAuthenticationToken(principal, null, getGrantedAuthorities(authorities)) : null;
                 } else {
-                     logger.log(Level.INFO, "JWT " + token + " exists in blacklist");
+                    logger.log(Level.INFO, "JWT " + token + " exists in blacklist");
                 }
             }
         } catch (ExpiredJwtException ex) {
