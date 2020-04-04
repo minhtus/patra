@@ -1,10 +1,13 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.utils.AuthorizationUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -20,6 +23,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final AuthorizationUtils authorizationUtils;
 
     public Member getMember(String memberId) throws EntityNotFoundException {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
@@ -39,10 +43,15 @@ public class MemberService {
         return optionalMember;
     }
 
-    public Member insertMember(Member newMember) throws EntityNotFoundException {
+    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
-        || ObjectUtils.isEmpty(newMember.getUsername())) {
-            throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissionIds) not found!");
+        || ObjectUtils.isEmpty(newMember.getUsername())
+        || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
+            throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissions) not found!");
+        }
+        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getOrgId(), newMember.getUsername());
+        if (!ObjectUtils.isEmpty(memInDB)) {
+            throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
         validateMember(newMember);
         return memberRepository.save(newMember);
