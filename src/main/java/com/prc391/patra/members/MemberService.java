@@ -1,5 +1,6 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
@@ -39,10 +40,14 @@ public class MemberService {
         return optionalMember;
     }
 
-    public Member insertMember(Member newMember) throws EntityNotFoundException {
+    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
         || ObjectUtils.isEmpty(newMember.getUsername())) {
             throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissionIds) not found!");
+        }
+        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getOrgId(), newMember.getUsername());
+        if (!ObjectUtils.isEmpty(memInDB)) {
+            throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
         validateMember(newMember);
         return memberRepository.save(newMember);

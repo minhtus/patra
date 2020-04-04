@@ -1,5 +1,6 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.members.requests.CreateMemberRequest;
 import com.prc391.patra.orgs.Organization;
@@ -40,7 +41,7 @@ public class MemberController {
 
     @PostMapping
     public ResponseEntity<Member> insertMember(
-            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException {
+            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException, EntityExistedException {
         return ResponseEntity.ok(memberService.insertMember(mapper.map(newMember,Member.class)));
     }
 
