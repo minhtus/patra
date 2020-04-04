@@ -6,7 +6,10 @@ import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
+import com.prc391.patra.tasks.TaskRepository;
 import com.prc391.patra.users.User;
+import com.prc391.patra.users.UserRedis;
+import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.utils.AuthorizationUtils;
 import com.prc391.patra.utils.PatraStringUtils;
@@ -15,9 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import java.security.Security;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -27,6 +31,8 @@ public class MemberService {
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final AuthorizationUtils authorizationUtils;
+    private final UserRedisRepository userRedisRepository;
+    private final TaskRepository taskRepository;
 
     public Member getMember(String memberId) throws EntityNotFoundException {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
@@ -48,11 +54,11 @@ public class MemberService {
 
     public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
-        || ObjectUtils.isEmpty(newMember.getUsername())
-        || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
+                || ObjectUtils.isEmpty(newMember.getUsername())
+                || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
             throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissions) not found!");
         }
-        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getUsername(),newMember.getOrgId());
+        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getUsername(), newMember.getOrgId());
         if (!ObjectUtils.isEmpty(memInDB)) {
             throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
@@ -60,8 +66,9 @@ public class MemberService {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
         validateMember(newMember);
-
-        return memberRepository.save(newMember);
+        Member newMemSavedInDB = memberRepository.save(newMember);
+        updateUserInRedis(newMemSavedInDB.getUsername());
+        return newMemSavedInDB;
     }
 
     public Member updateMember(String id, Member updateMember) throws EntityNotFoundException, UnauthorizedException {
@@ -87,7 +94,11 @@ public class MemberService {
         if (!authorizationUtils.authorizeAccess(optionalCurrMember.get().getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
+        String username = optionalCurrMember.get().getUsername();
+        List<String> assignedTaskIds = optionalCurrMember.get().getAssignedTaskId();
+//        taskRepository.removeAssignee();
         memberRepository.deleteById(id);
+        updateUserInRedis(username);
     }
 
     /**
@@ -115,6 +126,14 @@ public class MemberService {
                 }
             }
         }
+    }
 
+    private void updateUserInRedis(String username) {
+        UserRedis userInRedis = userRedisRepository.findById(username).get();
+        userRedisRepository.deleteById(username);
+        Map<String, String> orgPermissions = memberRepository.getAllByUsername(username).stream()
+                .collect(Collectors.toMap(Member::getOrgId, Member::getPermission));
+        userInRedis.setOrgPermissions(orgPermissions);
+        userRedisRepository.save(userInRedis);
     }
 }

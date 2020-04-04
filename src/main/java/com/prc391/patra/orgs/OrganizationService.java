@@ -6,7 +6,6 @@ import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
-import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.utils.AuthorizationUtils;
@@ -78,7 +77,7 @@ public class OrganizationService {
         if (!optionalCurrOrg.isPresent()) {
             throw new EntityNotFoundException("Organization with id " + id + " not exist.");
         }
-        if (!authorizationUtils.authorizeAccess(id,SecurityConstants.ADMIN_ACCESS)) {
+        if (!authorizationUtils.authorizeAccess(id, SecurityConstants.ADMIN_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
         Organization currOrg = optionalCurrOrg.get();
@@ -91,7 +90,7 @@ public class OrganizationService {
         if (!optionalCurrOrg.isPresent()) {
             throw new EntityNotFoundException("Organization with id " + id + " not exist.");
         }
-        if (!authorizationUtils.authorizeAccess(id,SecurityConstants.ADMIN_ACCESS)) {
+        if (!authorizationUtils.authorizeAccess(id, SecurityConstants.ADMIN_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
         PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
@@ -102,7 +101,6 @@ public class OrganizationService {
         updateUserInRedis(principal.getUsername());
         organizationRepository.deleteById(id);
     }
-
 
     private void updateUserInRedis(String username) {
         UserRedis userInRedis = userRedisRepository.findById(username).get();

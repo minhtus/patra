@@ -1,17 +1,21 @@
 package com.prc391.patra.sheets;
 
+import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
+import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.tasks.Task;
 import com.prc391.patra.tasks.TaskRepository;
 import com.prc391.patra.utils.AuthorizationUtils;
+import com.prc391.patra.utils.ControllerSupportUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.swing.plaf.synth.ColorType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -65,10 +69,13 @@ public class SheetService {
         if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
-        Optional<Sheet> optionalSheet = sheetRepository.findById(sheet.getSheetId());
-        if (optionalSheet.isPresent()) {
-            throw new EntityExistedException("Sheet " + sheet.getSheetId() + " is existed");
-        }
+//        Optional<Sheet> optionalSheet = sheetRepository.findById(sheet.getSheetId());
+//        if (optionalSheet.isPresent()) {
+//            throw new EntityExistedException("Sheet " + sheet.getSheetId() + " is existed");
+//        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        sheet.setReporter(member.getMemberId());
         return sheetRepository.save(sheet);
     }
 
