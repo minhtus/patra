@@ -7,9 +7,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v0/tasks/{id}/comments")
@@ -27,9 +29,9 @@ public class CommentController {
     public ResponseEntity comment(@PathVariable("id") String id,
                                   @Valid @RequestBody CommentRequest commentContent)
             throws EntityNotFoundException, UnauthorizedException {
-        boolean result = commentService.comment(id, commentContent.getComment());
-        if (result) {
-            return ResponseEntity.ok().build();
+        Map<String, String> result = commentService.comment(id, commentContent.getComment());
+        if (!CollectionUtils.isEmpty(result)) {
+            return ResponseEntity.ok(result);
         } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

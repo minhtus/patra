@@ -17,6 +17,8 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -36,7 +38,7 @@ public class CommentService {
         this.authorizationUtils = authorizationUtils;
     }
 
-    boolean comment(String taskId, String commentContent) throws EntityNotFoundException, UnauthorizedException {
+    Map<String, String> comment(String taskId, String commentContent) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> optionalTask = taskRepository.findById(taskId);
         if (!optionalTask.isPresent()) {
             throw new EntityNotFoundException("Task not exist");
@@ -60,7 +62,11 @@ public class CommentService {
         User user = userRepository.findById(username).get();
         comment.setUsername(user.getName());
         comment.setComment(commentContent);
-        return taskRepository.insertComment(taskId, comment);
+        taskRepository.insertComment(taskId, comment);
+        Map<String, String> result = new HashMap<>();
+        result.put("taskId", taskId);
+        result.put("commentId", comment.getCommentId());
+        return result;
     }
 
     boolean updateComment(String taskId, String commentId, String commentContent) throws EntityNotFoundException, UnauthorizedException {
