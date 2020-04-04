@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,6 +68,10 @@ public class MemberService {
         }
         validateMember(newMember);
         Member newMemSavedInDB = memberRepository.save(newMember);
+        //insert orgCreator
+        Organization organization = organizationRepository.findById(newMemSavedInDB.getOrgId()).get();
+        organization.setOrgCreator(newMemSavedInDB.getMemberId());
+        organizationRepository.save(organization);
         updateUserInRedis(newMemSavedInDB.getUsername());
         return newMemSavedInDB;
     }
@@ -91,12 +96,20 @@ public class MemberService {
         if (!optionalCurrMember.isPresent()) {
             throw new EntityNotFoundException();
         }
-        if (!authorizationUtils.authorizeAccess(optionalCurrMember.get().getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+        Member deletingMember = optionalCurrMember.get();
+        //check if user is the org creator, if yes, then this member cannot be deleted.
+        //WHen the org is deleted, the orgCreator member would be deleted
+        Organization organization = organizationRepository.findById(deletingMember.getOrgId()).get();
+        if (deletingMember.getMemberId().equalsIgnoreCase(organization.getOrgCreator())) {
+            throw new UnauthorizedException("You cannot remove the organization creator. " +
+                    "You must delete the organization if you want to do that");
+        }
+        if (!authorizationUtils.authorizeAccess(deletingMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
-        String username = optionalCurrMember.get().getUsername();
-        List<String> assignedTaskIds = optionalCurrMember.get().getAssignedTaskId();
-//        taskRepository.removeAssignee();
+        String username = deletingMember.getUsername();
+        List<String> assignedTaskIds = deletingMember.getAssignedTaskId();
+        taskRepository.removeAssigneeInMultipleTask(assignedTaskIds, Arrays.asList(deletingMember.getMemberId()));
         memberRepository.deleteById(id);
         updateUserInRedis(username);
     }

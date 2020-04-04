@@ -13,10 +13,12 @@ public class Organization {
     private String orgId;
     private String name;
     private String imageUrl;
+    private String orgCreator;
 
     public void mergeForUpdate(Organization other) {
         this.orgId = other.orgId != null? other.orgId : this.orgId;
         this.name = other.name != null? other.name : this.name;
         this.imageUrl = other.imageUrl != null? other.imageUrl : this.imageUrl;
+        this.orgCreator = other.orgCreator != null? other.orgCreator : this.orgCreator;
     }
 }
