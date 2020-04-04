@@ -34,12 +34,12 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@RequestBody UpdateTaskRequest request, @PathVariable("id") String taskId) throws EntityNotFoundException {
+    public ResponseEntity<Task> updateTask(@RequestBody UpdateTaskRequest request, @PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(taskService.updateTask(taskId, mapper.map(request, Task.class)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteTask(@PathVariable("id") String taskId) throws EntityNotFoundException {
+    public ResponseEntity deleteTask(@PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
         taskService.deleteTask(taskId);
         return ResponseEntity.ok().build();
     }

@@ -2,6 +2,7 @@ package com.prc391.patra.members;
 
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.requests.CreateMemberRequest;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
@@ -41,21 +42,21 @@ public class MemberController {
 
     @PostMapping
     public ResponseEntity<Member> insertMember(
-            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException, EntityExistedException {
+            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         return ResponseEntity.ok(memberService.insertMember(mapper.map(newMember,Member.class)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Member> updateMember(
             @PathVariable("id") String id,
-            @RequestBody CreateMemberRequest updateMember) throws EntityNotFoundException {
+            @RequestBody CreateMemberRequest updateMember) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(memberService.updateMember(id, mapper.map(updateMember, Member.class)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteMember(
             @PathVariable("id") String id
-    ) throws EntityNotFoundException {
+    ) throws EntityNotFoundException, UnauthorizedException {
         memberService.deleteMember(id);
         return ResponseEntity.ok().build();
     }

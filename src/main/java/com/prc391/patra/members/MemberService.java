@@ -1,18 +1,29 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.constant.SecurityConstants;
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
+import com.prc391.patra.tasks.TaskRepository;
 import com.prc391.patra.users.User;
+import com.prc391.patra.users.UserRedis;
+import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.utils.AuthorizationUtils;
+import com.prc391.patra.utils.PatraStringUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -21,6 +32,9 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final AuthorizationUtils authorizationUtils;
+    private final UserRedisRepository userRedisRepository;
+    private final TaskRepository taskRepository;
 
     public Member getMember(String memberId) throws EntityNotFoundException {
         Optional<Member> optionalMember = memberRepository.findById(memberId);
@@ -40,20 +54,30 @@ public class MemberService {
         return optionalMember;
     }
 
-    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException {
+    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
-        || ObjectUtils.isEmpty(newMember.getUsername())) {
-            throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissionIds) not found!");
+                || ObjectUtils.isEmpty(newMember.getUsername())
+                || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
+            throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissions) not found!");
         }
-        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getOrgId(), newMember.getUsername());
+        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getUsername(), newMember.getOrgId());
         if (!ObjectUtils.isEmpty(memInDB)) {
             throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
+        if (!authorizationUtils.authorizeAccess(newMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         validateMember(newMember);
-        return memberRepository.save(newMember);
+        Member newMemSavedInDB = memberRepository.save(newMember);
+        //insert orgCreator
+        Organization organization = organizationRepository.findById(newMemSavedInDB.getOrgId()).get();
+        organization.setOrgCreator(newMemSavedInDB.getMemberId());
+        organizationRepository.save(organization);
+        updateUserInRedis(newMemSavedInDB.getUsername());
+        return newMemSavedInDB;
     }
 
-    public Member updateMember(String id, Member updateMember) throws EntityNotFoundException {
+    public Member updateMember(String id, Member updateMember) throws EntityNotFoundException, UnauthorizedException {
         Optional<Member> optionalCurrMember = memberRepository.findById(id);
         if (!optionalCurrMember.isPresent()) {
             throw new EntityNotFoundException();
@@ -61,16 +85,34 @@ public class MemberService {
         validateMember(updateMember);
 
         Member currMember = optionalCurrMember.get();
+        if (!authorizationUtils.authorizeAccess(currMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         currMember.mergeToUpdate(updateMember);
         return memberRepository.save(currMember);
     }
 
-    public void deleteMember(String id) throws EntityNotFoundException {
+    public void deleteMember(String id) throws EntityNotFoundException, UnauthorizedException {
         Optional<Member> optionalCurrMember = memberRepository.findById(id);
         if (!optionalCurrMember.isPresent()) {
             throw new EntityNotFoundException();
         }
+        Member deletingMember = optionalCurrMember.get();
+        //check if user is the org creator, if yes, then this member cannot be deleted.
+        //WHen the org is deleted, the orgCreator member would be deleted
+        Organization organization = organizationRepository.findById(deletingMember.getOrgId()).get();
+        if (deletingMember.getMemberId().equalsIgnoreCase(organization.getOrgCreator())) {
+            throw new UnauthorizedException("You cannot remove the organization creator. " +
+                    "You must delete the organization if you want to do that");
+        }
+        if (!authorizationUtils.authorizeAccess(deletingMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        String username = deletingMember.getUsername();
+        List<String> assignedTaskIds = deletingMember.getAssignedTaskId();
+        taskRepository.removeAssigneeInMultipleTask(assignedTaskIds, Arrays.asList(deletingMember.getMemberId()));
         memberRepository.deleteById(id);
+        updateUserInRedis(username);
     }
 
     /**
@@ -98,6 +140,14 @@ public class MemberService {
                 }
             }
         }
+    }
 
+    private void updateUserInRedis(String username) {
+        UserRedis userInRedis = userRedisRepository.findById(username).get();
+        userRedisRepository.deleteById(username);
+        Map<String, String> orgPermissions = memberRepository.getAllByUsername(username).stream()
+                .collect(Collectors.toMap(Member::getOrgId, Member::getPermission));
+        userInRedis.setOrgPermissions(orgPermissions);
+        userRedisRepository.save(userInRedis);
     }
 }

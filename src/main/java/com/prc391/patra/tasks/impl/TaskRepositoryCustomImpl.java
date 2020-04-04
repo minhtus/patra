@@ -1,6 +1,7 @@
 package com.prc391.patra.tasks.impl;
 
 import com.mongodb.client.result.UpdateResult;
+import com.prc391.patra.members.Member;
 import com.prc391.patra.tasks.Task;
 import com.prc391.patra.tasks.TaskRepositoryCustom;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -25,6 +26,13 @@ public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
         UpdateResult result = mongoTemplate.updateFirst(query(where("_id").is(taskId)),
                 new Update().addToSet("assignee").each(memberIds), Task.class);
 
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
+    }
+
+    @Override
+    public boolean removeAssigneeInMultipleTask(List<String> taskIds, List<String> memberIds) {
+        UpdateResult result = mongoTemplate.updateMulti(query(where("_id").in(taskIds)),
+                new Update().pullAll("assignee",memberIds.toArray()), Task.class);
         return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
 

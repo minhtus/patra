@@ -10,5 +10,5 @@ public class UpdateTaskRequest {
     private String taskDescription;
     private String taskDetails;
     private long dueDate;
-    private List<String> assignee;
+//    private List<String> assignee;
 }
