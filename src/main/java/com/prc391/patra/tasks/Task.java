@@ -23,7 +23,7 @@ public class Task {
     private String taskDetails;
     private int statusId;
     private long dueDate;
-    private Comment[] comments;
+    private List<Comment> comments;
     private String attachImagePath;
 
     void mergeForUpdate(Task other) {

@@ -52,19 +52,6 @@ class UserService {
         }
         newUserInfo.setPassHash(passwordEncoder.encode(newUserInfo.getPassHash()));
         newUserInfo.setEnabled(true);
-        //TODO: implement email verification, if possible
-//        user.setEmail(newUserInfo.getEmail());
-
-//        List<Long> userRoles = new ArrayList<>();
-//        for (Long roleId : newUserInfo.getRoles()) {
-//            Optional<Role> currentRole = roleRepository.findById(roleId);
-//            if (currentRole.isPresent()) {
-//                userRoles.add(roleId);
-//            } else {
-//                //TODO: role is not present
-//            }
-//        }
-//        user.setRoles(userRoles);
         return userRepository.save(newUserInfo);
     }
 
