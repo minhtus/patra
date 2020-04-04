@@ -6,6 +6,7 @@ import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.utils.PatraStringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -49,6 +50,9 @@ public class DatabaseAuthProvider implements AuthenticationProvider {
         User user = getLogin(username);
 
         if (user == null) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
+        if (PatraStringUtils.isBlankAndEmpty(user.getPassHash())) { //google users, must use google sign in
             throw new BadCredentialsException("Invalid credentials");
         }
         if (!passwordEncoder.matches(password, user.getPassHash())) {

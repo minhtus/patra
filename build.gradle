@@ -32,7 +32,8 @@ dependencies {
     implementation 'io.springfox:springfox-swagger-ui:2.9.2'
     // https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
     implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.4'
-
+    implementation 'com.google.api-client:google-api-client:1.24.1'
+    implementation 'com.google.http-client:google-http-client:1.24.1'
 
     //security things
     implementation 'org.springframework.boot:spring-boot-starter-security'

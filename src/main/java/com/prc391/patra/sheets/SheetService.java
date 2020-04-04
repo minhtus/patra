@@ -82,7 +82,7 @@ public class SheetService {
     void deleteSheet(String sheetId) throws EntityNotFoundException, UnauthorizedException, EntityExistedException {
         Optional<Sheet> optionalSheet = sheetRepository.findById(sheetId);
         if (!optionalSheet.isPresent()) {
-            throw new EntityExistedException("Sheet " + sheetId + " is not existed");
+            throw new EntityNotFoundException("Sheet " + sheetId + " is not exist");
         }
         Sheet sheet = optionalSheet.get();
         if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {

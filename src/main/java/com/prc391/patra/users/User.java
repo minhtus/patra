@@ -17,12 +17,14 @@ public class User {
     private String email;
     private String name;
 
+//    @JsonIgnore
+//    @Indexed(unique = true, name = "google_user_id_index")
+//    private String googleUserId;
+
     @JsonIgnore
     private boolean enabled;
 
-    //do it, official-ed, patch the hole on fish tank with a tape
     private String currMemberId;
 
-    //temporary remove Role functionality
-//    private List<Long> roles;
+    private String imageUrl;
 }
