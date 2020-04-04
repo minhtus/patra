@@ -64,15 +64,11 @@ public class MemberService {
         if (!ObjectUtils.isEmpty(memInDB)) {
             throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
-        if (!authorizationUtils.authorizeAccess(newMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
-            throw new UnauthorizedException("You don't have permission to access this resource");
-        }
+//        if (!authorizationUtils.authorizeAccess(newMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+//            throw new UnauthorizedException("You don't have permission to access this resource");
+//        }
         validateMember(newMember);
         Member newMemSavedInDB = memberRepository.save(newMember);
-        //insert orgCreator
-        Organization organization = organizationRepository.findById(newMemSavedInDB.getOrgId()).get();
-        organization.setOrgCreator(newMemSavedInDB.getMemberId());
-        organizationRepository.save(organization);
         updateUserInRedis(newMemSavedInDB.getUsername());
         return newMemSavedInDB;
     }

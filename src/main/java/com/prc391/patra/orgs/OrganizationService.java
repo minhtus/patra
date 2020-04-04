@@ -68,8 +68,9 @@ public class OrganizationService {
         member.setOrgId(organization.getOrgId());
         member.setPermission(SecurityConstants.ADMIN_ACCESS);
         memberRepository.save(member);
+        organization.setOrgCreator(member.getMemberId());
         updateUserInRedis(principal.getUsername());
-        return organization;
+        return organizationRepository.save(organization);
     }
 
     public Organization updateOrganization(String id, Organization updateOrg) throws EntityNotFoundException, UnauthorizedException {
