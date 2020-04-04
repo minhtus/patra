@@ -35,9 +35,10 @@ public class ImagesController {
     }
 
     @GetMapping("/{resource}")
-    public ResponseEntity<InputStreamResource> downloadImage(@PathVariable("resource") String resourceName) throws IOException {
+    public ResponseEntity<InputStreamResource> downloadImage(@PathVariable("resource") String resourceName) throws IOException, EntityNotFoundException {
         String filename = resourceName.substring(resourceName.lastIndexOf("_") + 1);
         Resource resource = s3Service.download(resourceName);
+        if (!resource.exists()) throw new EntityNotFoundException("File not found");
         return ResponseEntity.ok().header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.IMAGE_PNG)
                 .contentLength(resource.contentLength())
