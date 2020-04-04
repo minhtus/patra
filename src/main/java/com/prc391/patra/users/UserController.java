@@ -11,6 +11,7 @@ import com.prc391.patra.members.MemberService;
 import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.users.requests.ChangePassRequest;
+import com.prc391.patra.users.requests.CreateGoogleUserRequest;
 import com.prc391.patra.users.requests.CreateUserRequest;
 import com.prc391.patra.utils.JWTUtils;
 import com.prc391.patra.utils.PatraStringUtils;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +42,7 @@ public class UserController {
     private final ModelMapper mapper;
     private final MemberService memberService;
     private final JwtRedisService jwtRedisService;
+    private final GoogleLoginService googleLoginService;
 
     @GetMapping("/{username}")
     public ResponseEntity<User> getUserByUsername(
@@ -52,7 +55,6 @@ public class UserController {
     //needed this, otherwise it will call the POST method below
     @GetMapping
     public ResponseEntity<User> getUserByUsername() throws EntityNotFoundException {
-        //TODO get by username or email
         return ResponseEntity.ok(userService.getUser(null));
     }
 
@@ -63,6 +65,21 @@ public class UserController {
         return ResponseEntity.ok(userService.registerUser(user));
     }
 
+    @PostMapping("/google/register")
+    public ResponseEntity<User> registerGoogleUser(@RequestBody CreateGoogleUserRequest request) throws UnauthorizedException {
+        User result = googleLoginService.registerNewGoogleUser(request.getGoogleIdToken());
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/google/check-register")
+    public ResponseEntity<User> checkGoogleUser(@RequestBody CreateGoogleUserRequest request) {
+        boolean result = googleLoginService.checkUserExisted(request.getGoogleIdToken());
+        if (result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 
     @PostMapping("/change-pass")
     public ResponseEntity changePassword(
