@@ -49,7 +49,7 @@ public class MemberService {
         || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
             throw new EntityNotFoundException("insertMember: required fields (OrgId, username, permissions) not found!");
         }
-        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getOrgId(), newMember.getUsername());
+        Member memInDB = memberRepository.getByUsernameAndOrgId(newMember.getUsername(),newMember.getOrgId());
         if (!ObjectUtils.isEmpty(memInDB)) {
             throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
