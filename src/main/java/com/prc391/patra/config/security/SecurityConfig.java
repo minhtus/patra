@@ -90,7 +90,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         http.cors();
         http.authorizeRequests()
-                .antMatchers("/login","/v0/users/google/check-register","/v0/users/google/register")
+                .antMatchers("/login","/v0/users/google/login")
                 .permitAll();
         http.authorizeRequests()
                 .anyRequest()

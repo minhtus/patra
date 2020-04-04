@@ -21,7 +21,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,20 +64,12 @@ public class UserController {
         return ResponseEntity.ok(userService.registerUser(user));
     }
 
-    @PostMapping("/google/register")
-    public ResponseEntity<User> registerGoogleUser(@RequestBody CreateGoogleUserRequest request) throws UnauthorizedException {
-        User result = googleLoginService.registerNewGoogleUser(request.getGoogleIdToken());
-        return ResponseEntity.ok(result);
-    }
-
-    @PostMapping("/google/check-register")
-    public ResponseEntity<User> checkGoogleUser(@RequestBody CreateGoogleUserRequest request) {
-        boolean result = googleLoginService.checkUserExisted(request.getGoogleIdToken());
-        if (result) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @PostMapping("/google/login")
+    public ResponseEntity<User> registerGoogleUser(
+            @RequestBody CreateGoogleUserRequest request) throws UnauthorizedException {
+        User result = googleLoginService.googleLogin(request.getGoogleIdToken());
+        HttpHeaders headers = getNewAuthorizationHeader(result.getUsername());
+        return ResponseEntity.ok().headers(headers).body(result);
     }
 
     @PostMapping("/change-pass")
@@ -109,9 +100,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserMember(username));
     }
 
-
-    //TODO get all lists of user
-    //TODO get all task of user
     private HttpHeaders getNewAuthorizationHeader(PatraUserPrincipal principal) {
         String newJWT = JWTUtils.buildJWT(Collections.emptyList(), principal.getUsername());
         if (!PatraStringUtils.isBlankAndEmpty(principal.getJwt())) {
@@ -121,4 +109,16 @@ public class UserController {
         headers.set("Authorization", SecurityConstants.TOKEN_PREFIX + " " + newJWT);
         return headers;
     }
+
+    private HttpHeaders getNewAuthorizationHeader(String username) {
+        String newJWT = JWTUtils.buildJWT(Collections.emptyList(), username);
+//        if (!PatraStringUtils.isBlankAndEmpty(principal.getJwt())) {
+//            jwtRedisService.saveToRedisBlacklist(principal.getJwt());
+//        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", SecurityConstants.TOKEN_PREFIX + " " + newJWT);
+        return headers;
+    }
+
+
 }
