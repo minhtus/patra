@@ -1,7 +1,9 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.users.User;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.security.Security;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +46,7 @@ public class MemberService {
         return optionalMember;
     }
 
-    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException {
+    public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         if (ObjectUtils.isEmpty(newMember.getOrgId())
         || ObjectUtils.isEmpty(newMember.getUsername())
         || PatraStringUtils.isBlankAndEmpty(newMember.getPermission())) {
@@ -53,11 +56,15 @@ public class MemberService {
         if (!ObjectUtils.isEmpty(memInDB)) {
             throw new EntityExistedException("Member " + memInDB.getMemberId() + " is exist");
         }
+        if (!authorizationUtils.authorizeAccess(newMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         validateMember(newMember);
+
         return memberRepository.save(newMember);
     }
 
-    public Member updateMember(String id, Member updateMember) throws EntityNotFoundException {
+    public Member updateMember(String id, Member updateMember) throws EntityNotFoundException, UnauthorizedException {
         Optional<Member> optionalCurrMember = memberRepository.findById(id);
         if (!optionalCurrMember.isPresent()) {
             throw new EntityNotFoundException();
@@ -65,14 +72,20 @@ public class MemberService {
         validateMember(updateMember);
 
         Member currMember = optionalCurrMember.get();
+        if (!authorizationUtils.authorizeAccess(currMember.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         currMember.mergeToUpdate(updateMember);
         return memberRepository.save(currMember);
     }
 
-    public void deleteMember(String id) throws EntityNotFoundException {
+    public void deleteMember(String id) throws EntityNotFoundException, UnauthorizedException {
         Optional<Member> optionalCurrMember = memberRepository.findById(id);
         if (!optionalCurrMember.isPresent()) {
             throw new EntityNotFoundException();
+        }
+        if (!authorizationUtils.authorizeAccess(optionalCurrMember.get().getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
         }
         memberRepository.deleteById(id);
     }
