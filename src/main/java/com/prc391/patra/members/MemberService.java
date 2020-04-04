@@ -2,6 +2,7 @@ package com.prc391.patra.members;
 
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityExistedException;
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.orgs.Organization;
