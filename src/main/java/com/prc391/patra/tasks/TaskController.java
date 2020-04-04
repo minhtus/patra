@@ -7,13 +7,10 @@ import com.prc391.patra.members.MemberService;
 import com.prc391.patra.tasks.requests.CreateTaskRequest;
 import com.prc391.patra.tasks.requests.UpdateTaskRequest;
 import com.prc391.patra.users.UserRedisService;
-import com.prc391.patra.users.permission.PermissionService;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,10 +21,6 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
     private final ModelMapper mapper;
-    private final UserRedisService userRedisService;
-    private final PermissionService permissionService;
-    private final MemberService memberService;
-    private final JwtRedisService jwtRedisService;
 
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable("id") String taskId) throws EntityNotFoundException, UnauthorizedException {
