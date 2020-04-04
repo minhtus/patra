@@ -53,7 +53,7 @@ public class OrganizationController {
 
     @PostMapping
     public ResponseEntity<Organization> insertOrganization(
-            @RequestBody CreateOrganizationRequest newOrg) {
+            @RequestBody CreateOrganizationRequest newOrg) throws UnauthorizedException {
         return ResponseEntity.ok(organizationService.insertOrganization(mapper.map(newOrg, Organization.class)));
     }
 
