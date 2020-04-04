@@ -8,8 +8,11 @@ import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
+import com.prc391.patra.users.UserRepository;
 import com.prc391.patra.utils.AuthorizationUtils;
 import com.prc391.patra.utils.ControllerSupportUtils;
+import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -21,20 +24,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final MemberRepository memberRepository;
     private final AuthorizationUtils authorizationUtils;
     private final UserRedisRepository userRedisRepository;
-
-    @Autowired
-    public OrganizationService(OrganizationRepository organizationRepository, MemberRepository memberRepository, AuthorizationUtils authorizationUtils, UserRedisRepository userRedisRepository) {
-        this.organizationRepository = organizationRepository;
-        this.memberRepository = memberRepository;
-        this.authorizationUtils = authorizationUtils;
-        this.userRedisRepository = userRedisRepository;
-    }
+    private final ModelMapper mapper;
+    private final UserRepository userRepository;
 
     public List<Organization> getAllOrg() {
         return organizationRepository.findAll();
@@ -104,8 +102,8 @@ public class OrganizationService {
     }
 
     private void updateUserInRedis(String username) {
-        UserRedis userInRedis = userRedisRepository.findById(username).get();
         userRedisRepository.deleteById(username);
+        UserRedis userInRedis = mapper.map(userRepository.findById(username).get(), UserRedis.class);
         Map<String, String> orgPermissions = memberRepository.getAllByUsername(username).stream()
                 .collect(Collectors.toMap(Member::getOrgId, Member::getPermission));
         userInRedis.setOrgPermissions(orgPermissions);
