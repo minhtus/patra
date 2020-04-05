@@ -1,6 +1,6 @@
 package com.prc391.patra.orgs;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
@@ -13,7 +13,6 @@ import com.prc391.patra.utils.AuthorizationUtils;
 import com.prc391.patra.utils.ControllerSupportUtils;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;

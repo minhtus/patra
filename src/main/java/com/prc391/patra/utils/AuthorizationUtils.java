@@ -1,6 +1,6 @@
 package com.prc391.patra.utils;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.members.MemberRepository;

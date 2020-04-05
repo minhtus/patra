@@ -1,4 +1,4 @@
-package com.prc391.patra.config.security;
+package com.prc391.patra.security;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;

@@ -1,6 +1,6 @@
 package com.prc391.patra.users;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
@@ -47,7 +47,6 @@ public class UserController {
     public ResponseEntity<User> getUserByUsername(
             @PathVariable(value = "username") String username
     ) throws EntityNotFoundException {
-        //TODO get by username or email
         return ResponseEntity.ok(userService.getUser(username));
     }
 
@@ -86,8 +85,6 @@ public class UserController {
         return ResponseEntity.ok().headers(headers).build();
     }
 
-
-    //TODO get all org of user (members) maybe done?
     @GetMapping("/{username}/organizations")
     public ResponseEntity<List<Organization>> getUserOrganization(
             @PathVariable("username") String username) throws EntityNotFoundException {

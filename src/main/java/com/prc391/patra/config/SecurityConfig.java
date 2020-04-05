@@ -1,8 +1,10 @@
-package com.prc391.patra.config.security;
+package com.prc391.patra.config;
 
-import com.prc391.patra.filter.JWTAuthenticationFilter;
-import com.prc391.patra.filter.JWTLoginFilter;
+import com.prc391.patra.security.filter.JWTAuthenticationFilter;
+import com.prc391.patra.security.filter.JWTLoginFilter;
 import com.prc391.patra.jwt.JwtRedisService;
+import com.prc391.patra.security.DatabaseAuthProvider;
+import com.prc391.patra.security.PatraLogoutSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,21 +61,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
-        //allow cors here, when go production comment the * line, uncomment the line above the * line
-//        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080","http://iq30.co"));
         configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization", "Cache-Control", "Content-type"
+                "Authorization", "Cache-Control", "Content-type", "Content-length"
         ));
         configuration.addExposedHeader("Authorization");
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // put "/**"  in "path" param to allow all,
-        // when auth is fully implemented and used, use "/login" only to allow pre-flight request
-        // when login
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -85,9 +82,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //temporary disable this to let anonymous use POST methods
-        //re-enable it (delete this line) before going "production"
-        http.csrf().disable();
         http.cors();
         http.authorizeRequests()
                 .antMatchers("/login","/v0/users/google/login")
@@ -101,12 +95,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .enableSessionUrlRewriting(false);
-        ;
 
         http
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new JWTAuthenticationFilter(jwtRedisService), UsernamePasswordAuthenticationFilter.class)
-        ;
+                .addFilterBefore(new JWTAuthenticationFilter(jwtRedisService), UsernamePasswordAuthenticationFilter.class);
+
         http.logout()
                 .logoutSuccessUrl("/logouts")
                 .logoutUrl("/logouts")

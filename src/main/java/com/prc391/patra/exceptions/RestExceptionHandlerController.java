@@ -1,5 +1,6 @@
 package com.prc391.patra.exceptions;
 
+import com.prc391.patra.utils.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,19 +9,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class RestExceptionHandlerController {
 
-    //TODO define a Base response and put message in
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity notFoundHandler() {
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<BaseResponse> notFoundHandler(Exception ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new BaseResponse(false, "Entity not found " + ex.getMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity unauthorizedHandler() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    public ResponseEntity unauthorizedHandler(Exception ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new BaseResponse(false, "Unauthorized " + ex.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity badRequestHandler() {
-        return ResponseEntity.badRequest().build();
+    public ResponseEntity badRequestHandler(Exception ex) {
+        return ResponseEntity.badRequest()
+                .body(new BaseResponse(false, "Invalid params or payload " + ex.getMessage()));
     }
 }

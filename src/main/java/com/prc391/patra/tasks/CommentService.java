@@ -1,6 +1,5 @@
 package com.prc391.patra.tasks;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;

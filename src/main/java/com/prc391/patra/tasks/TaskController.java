@@ -63,10 +63,4 @@ public class TaskController {
             return ResponseEntity.ok(task);
     }
 
-    //TODO: delete this after development
-    @GetMapping
-    public ResponseEntity getAllTask() {
-        return ResponseEntity.ok(taskService.getAllTask());
-    }
-
 }

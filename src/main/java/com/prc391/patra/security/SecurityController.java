@@ -1,6 +1,6 @@
-package com.prc391.patra.constant;
+package com.prc391.patra.security;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.jwt.JwtRedisService;
 import com.prc391.patra.users.UserRedisService;

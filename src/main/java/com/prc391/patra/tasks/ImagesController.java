@@ -24,7 +24,9 @@ public class ImagesController {
     @PostMapping
     public void uploadImage(@RequestParam("file") MultipartFile file,
                             @RequestParam(value = "taskId") String taskId) throws IOException, EntityNotFoundException {
-        // TODO check file type
+        if (!MediaType.IMAGE_JPEG_VALUE.equals(file.getContentType()) && !MediaType.IMAGE_PNG_VALUE.equals(file.getContentType())) {
+            throw new IllegalArgumentException("Invalid file types. Only accept jpg/png images");
+        }
         String resourceName = s3Service.upload(file);
         boolean result = taskService.attachImage(taskId, IMAGES_CONTEXT_PATH + resourceName);
         if (result) {

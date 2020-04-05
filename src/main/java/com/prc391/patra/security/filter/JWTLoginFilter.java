@@ -1,6 +1,6 @@
-package com.prc391.patra.filter;
+package com.prc391.patra.security.filter;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.utils.JWTUtils;
 import com.prc391.patra.utils.PatraStringUtils;

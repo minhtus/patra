@@ -1,4 +1,4 @@
-package com.prc391.patra.config.security;
+package com.prc391.patra.security;
 
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;

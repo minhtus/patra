@@ -1,6 +1,5 @@
-package com.prc391.patra.config.security;
+package com.prc391.patra.security;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;

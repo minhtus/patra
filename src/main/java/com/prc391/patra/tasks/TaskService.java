@@ -1,6 +1,6 @@
 package com.prc391.patra.tasks;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
@@ -19,9 +19,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,22 +48,6 @@ public class TaskService {
         } else {
             throw new EntityNotFoundException();
         }
-    }
-
-    //TODO: delete this after done development
-    public List<Map<String, Object>> getAllTask() {
-        List<Task> getAll = taskRepository.findAll();
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Task task : getAll) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("taskId", task.getTaskId());
-            map.put("taskName", task.getTaskName());
-            map.put("taskDetail", task.getTaskDetails());
-            List<Member> members = (List<Member>) memberRepository.findAllById(task.getAssignee() == null ? new ArrayList<>() : task.getAssignee());
-            map.put("members", members.stream().map(member -> member.getUsername() + " " + member.getMemberId()));
-            result.add(map);
-        }
-        return result;
     }
 
     public Task insertTask(Task task) throws EntityNotFoundException, UnauthorizedException {

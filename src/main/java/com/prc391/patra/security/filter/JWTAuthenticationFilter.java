@@ -1,6 +1,6 @@
-package com.prc391.patra.filter;
+package com.prc391.patra.security.filter;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.jwt.JwtRedisService;
 import com.prc391.patra.utils.JWTUtils;
@@ -64,7 +64,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         } catch (MalformedJwtException ex) {
             logger.info("Malformed jwt");
         }
-        //TODO: throw exception
         return null;
     }
 
