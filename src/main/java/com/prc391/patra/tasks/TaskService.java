@@ -129,7 +129,7 @@ public class TaskService {
         Task task = optionalTask.get();
         Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
 
-        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.WRITE_ACCESS)) {
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.READ_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
         Member member = memberRepository.getByUsernameAndOrgId(ControllerSupportUtils.getPatraPrincipal().getUsername(), sheet.getOrgId());

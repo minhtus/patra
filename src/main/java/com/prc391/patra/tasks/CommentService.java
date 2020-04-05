@@ -100,7 +100,7 @@ public class CommentService {
     boolean deleteComment(String taskId, String commentId) throws EntityNotFoundException, UnauthorizedException {
         if (taskRepository.existsById(taskId) && taskRepository.commentExist(taskId, commentId)) {
             Task task = taskRepository.findById(taskId).get();
-            Comment comment  = task.getComments().stream()
+            Comment comment = task.getComments().stream()
                     .filter(commentInTask -> commentInTask.getCommentId().equalsIgnoreCase(commentId))
                     .findFirst().get();
             String memberId = comment.getMemberId();
@@ -115,8 +115,11 @@ public class CommentService {
             isAuthorized(task, member);
             //check if editing user is the original commentor (ex: tantk cannot change phuongdt's comment)
             String currentUsername = ControllerSupportUtils.getPatraPrincipal().getUsername();
-            if (!member.getUsername().equalsIgnoreCase(currentUsername)) {
-                throw new UnauthorizedException("You don't have permission to access this resource");
+            //but allow admin to delete member's comment
+            if (!SecurityConstants.ADMIN_ACCESS.equals(member.getPermission())) {
+                if (!member.getUsername().equalsIgnoreCase(currentUsername)) {
+                    throw new UnauthorizedException("You don't have permission to access this resource");
+                }
             }
             return taskRepository.deleteComment(taskId, commentId);
         } else {
@@ -130,7 +133,7 @@ public class CommentService {
             throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
         }
         Sheet sheet = optionalSheet.get();
-        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.WRITE_ACCESS)) {
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.READ_ACCESS)) {
             throw new UnauthorizedException("You don't have permission to access this resource");
         }
         if (!task.getAssignee().contains(member.getMemberId())) {
