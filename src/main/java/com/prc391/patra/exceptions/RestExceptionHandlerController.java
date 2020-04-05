@@ -1,6 +1,7 @@
 package com.prc391.patra.exceptions;
 
 import com.prc391.patra.utils.BaseResponse;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,5 +26,11 @@ public class RestExceptionHandlerController {
     public ResponseEntity badRequestHandler(Exception ex) {
         return ResponseEntity.badRequest()
                 .body(new BaseResponse(false, "Invalid params or payload " + ex.getMessage()));
+    }
+
+    @ExceptionHandler(RedisConnectionFailureException.class)
+    public ResponseEntity redisConnectionFailureHandler(Exception ex) {
+        return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(new BaseResponse(false, "Timeout " + ex.getMessage()));
     }
 }
