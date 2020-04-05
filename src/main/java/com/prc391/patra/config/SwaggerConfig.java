@@ -35,15 +35,12 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.SWAGGER_2)
                 .securitySchemes(
                         Arrays.asList(new ApiKey(
-                                "JWT Token Here",
+                                "Bearer token",
                                 HttpHeaders.AUTHORIZATION,
                                 In.HEADER.name())))
-//                .securityContexts(Arrays.asList(securityContext())
                 .select()
-//                .apis(RequestHandlerSelectors.basePackage("com.prc391.patra"))
                 .build()
                 .apiInfo(apiInfo())
-                //use this to pass JWT, will remove when OAuth2 is implemented
                 .globalOperationParameters(Arrays.asList(parameterBuilder()))
 
                 ;
@@ -52,40 +49,10 @@ public class SwaggerConfig {
     private Parameter parameterBuilder() {
         return new ParameterBuilder()
                 .name("Authorization")
-                .description("Put your JWT here")
+                .description("Bearer token")
                 .modelRef(new ModelRef("string"))
                 .parameterType("header")
                 .required(false)
                 .build();
     }
-
-    //will be used in OAuth2
-//    private SecurityContext securityContext() {
-//
-//        AuthorizationScope authorizationScope = new AuthorizationScope("global", "accessEverything");
-//        AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
-//        authorizationScopes[0] = authorizationScope;
-//
-//        List<SecurityReference> securityReferences = new ArrayList<>();
-//        securityReferences.add(new SecurityReference("swaggerApiKey", authorizationScopes));
-//
-//        return SecurityContext.builder()
-//                .securityReferences(securityReferences)
-//                .build();
-//    }
-
-    //will be used in OAuth2
-//    @Bean
-//    SecurityConfiguration security() {
-//        return new SecurityConfiguration(
-//                "test-app-client-id",
-//                "test-app-client-secret",
-//                "test-app-reich",
-//                "test-app",
-//                "Authorization",
-//                ApiKeyVehicle.HEADER,
-//                "Basic",
-//                ","
-//        );
-//    }
 }

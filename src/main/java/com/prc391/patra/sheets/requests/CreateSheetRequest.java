@@ -7,7 +7,6 @@ public class CreateSheetRequest {
     private String orgId;
     private String sheetName;
     private String sheetDescription;
-    private String reporter;
     private boolean privateSheet;
 
 }

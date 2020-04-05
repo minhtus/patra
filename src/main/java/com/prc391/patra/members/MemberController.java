@@ -1,20 +1,17 @@
 package com.prc391.patra.members;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.requests.CreateMemberRequest;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v0/members")
@@ -29,6 +26,13 @@ public class MemberController {
         this.mapper = mapper;
     }
 
+    @GetMapping("/")
+    public ResponseEntity<List<Member>> getMultiMember(
+            @RequestParam List<String> memberIDs
+    ) throws EntityNotFoundException {
+        return ResponseEntity.ok(memberService.getMultiMember(memberIDs));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Member> getMember(
             @PathVariable("id") String id
@@ -38,21 +42,21 @@ public class MemberController {
 
     @PostMapping
     public ResponseEntity<Member> insertMember(
-            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException {
+            @RequestBody CreateMemberRequest newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         return ResponseEntity.ok(memberService.insertMember(mapper.map(newMember,Member.class)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Member> updateMember(
             @PathVariable("id") String id,
-            @RequestBody CreateMemberRequest updateMember) throws EntityNotFoundException {
+            @RequestBody CreateMemberRequest updateMember) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(memberService.updateMember(id, mapper.map(updateMember, Member.class)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteMember(
             @PathVariable("id") String id
-    ) throws EntityNotFoundException {
+    ) throws EntityNotFoundException, UnauthorizedException {
         memberService.deleteMember(id);
         return ResponseEntity.ok().build();
     }

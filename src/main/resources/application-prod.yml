@@ -9,11 +9,22 @@ spring:
       field-naming-strategy: org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
       database: patra_db
       uri: mongodb+srv://patra_db_user:CgUnYcYMTO8Sst3f@tunguyen-atlascluster-xyxac.mongodb.net/?retryWrites=true&w=majority
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  redis:
+    host: ec2-3-228-8-122.compute-1.amazonaws.com
+    port: 6379
+    password: NamNSLoginWithGetInSpringSecurityWithPatraProject
+#    host: 34.200.253.130
 
 cloud:
   aws:
     region:
       static: us-east-1
       auto: false
+    credentials:
+      instance-profile: false
     stack:
       auto: false

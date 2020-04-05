@@ -3,7 +3,6 @@ package com.prc391.patra.members.impl;
 import com.mongodb.client.result.UpdateResult;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepositoryCustom;
-import com.prc391.patra.tasks.Task;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
@@ -34,4 +33,13 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom {
                 new Update().addToSet("assignedTaskId").each(taskIds), Member.class);
         return result.wasAcknowledged() && result.getModifiedCount() > 0;
     }
+
+    @Override
+    public boolean removeAssignedTask(List<String> memberIds, List<String> taskIds) {
+        UpdateResult result = mongoTemplate.updateMulti(query(where("_id").in(memberIds)),
+                new Update().pullAll("assignedTaskId",taskIds.toArray()), Member.class);
+        return result.wasAcknowledged() && result.getModifiedCount() > 0;
+    }
+
+
 }

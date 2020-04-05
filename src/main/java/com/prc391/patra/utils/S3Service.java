@@ -1,6 +1,7 @@
 package com.prc391.patra.utils;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.WritableResource;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,10 @@ public class S3Service {
         this.resourceLoader = resourceLoader;
     }
 
-    public void upload(MultipartFile file) throws IOException {
+    public String upload(MultipartFile file) throws IOException {
+        String resourceName = String.format("%s_%s", System.currentTimeMillis(), file.getOriginalFilename());
         WritableResource writableResource = (WritableResource) resourceLoader
-                .getResource(String.format("%s/%s_%s", S3_IMAGES_CONTEXT_URL, System.currentTimeMillis(), file.getOriginalFilename()));
+                .getResource(String.format("%s/%s", S3_IMAGES_CONTEXT_URL, resourceName));
         try (InputStream inputStream = file.getInputStream();
              OutputStream outputStream = writableResource.getOutputStream()) {
             byte[] buffer = new byte[1024];
@@ -30,9 +32,10 @@ public class S3Service {
                 outputStream.write(buffer, 0, bytesRead);
             }
         }
+        return resourceName;
     }
 
-    public InputStream download(String resourceUrl) throws IOException {
-        return resourceLoader.getResource(resourceUrl).getInputStream();
+    public Resource download(String resource) throws IOException {
+        return resourceLoader.getResource(String.format("%s/%s", S3_IMAGES_CONTEXT_URL, resource));
     }
 }

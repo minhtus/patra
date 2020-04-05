@@ -1,11 +1,14 @@
-package com.prc391.patra.config.security;
+package com.prc391.patra.config;
 
-import com.prc391.patra.filter.JWTAuthenticationFilter;
-import com.prc391.patra.filter.JWTLoginFilter;
-import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.security.filter.JWTAuthenticationFilter;
+import com.prc391.patra.security.filter.JWTLoginFilter;
+import com.prc391.patra.jwt.JwtRedisService;
+import com.prc391.patra.security.DatabaseAuthProvider;
+import com.prc391.patra.security.PatraLogoutSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,12 +32,12 @@ import java.util.Arrays;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final DatabaseAuthProvider databaseAuthProvider;
-    private final UserRepository userRepository;
+    private final JwtRedisService jwtRedisService;
 
     @Autowired
-    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider, UserRepository userRepository) {
+    public SecurityConfig(DatabaseAuthProvider databaseAuthProvider, JwtRedisService jwtRedisService) {
         this.databaseAuthProvider = databaseAuthProvider;
-        this.userRepository = userRepository;
+        this.jwtRedisService = jwtRedisService;
     }
 
     /**
@@ -59,19 +62,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080","http://iq30.co"));
+        configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH"
         ));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization", "Cache-Control", "Content-type"
+                "Authorization", "Cache-Control", "Content-type", "Content-length"
         ));
         configuration.addExposedHeader("Authorization");
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // put "/**"  in "path" param to allow all,
-        // when auth is fully implemented and used, use "/login" only to allow pre-flight request
-        // when login
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
@@ -83,51 +83,32 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //temporary disable this to let anonymous use POST methods
-        //re-enable it (delete this line) before going "production"
         http.csrf().disable();
-
         http.cors();
-
         http.authorizeRequests()
-
-                .antMatchers("/login").permitAll()
-
-        ;
-
-        http
-                //stateless: won't create cookie and won't use cookie
-                //applies for both session and cookie
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .enableSessionUrlRewriting(false)
-                .and()
-                .authorizeRequests()
-                //enter what url you want to exclude here, and it won't be authenticated by Spring security
-                //ex: login
-//                .antMatchers(HttpMethod.POST,"/api/login").permitAll()
-                //hope this will prevent login with GET
-//                .antMatchers(HttpMethod.GET,"/login").denyAll()
-
-                //let anonymous use API for easier developing
+                .antMatchers("/login","/v0/users/google/login")
+                .permitAll();
+        http.authorizeRequests().antMatchers(HttpMethod.POST, "/v0/users")
+                .permitAll();
+        http.authorizeRequests()
                 .anyRequest()
-                .permitAll()
-        //uncomment the .authenticated and comment .permitAll to use security
-        //.authenticated()
+                .authenticated();
 
-//                .and()
-//                .httpBasic()
-        ;
+        //stateless: won't create cookie and won't use cookie
+        //applies for both session and cookie
+        http.sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .enableSessionUrlRewriting(false);
 
         http
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new JWTAuthenticationFilter(userRepository), UsernamePasswordAuthenticationFilter.class)
-        ;
+                .addFilterBefore(new JWTAuthenticationFilter(jwtRedisService), UsernamePasswordAuthenticationFilter.class);
 
         http.logout()
-//                .logoutSuccessUrl("/logout")
-                .logoutUrl("/logout")
-                .logoutSuccessHandler(logoutSuccessHandler());
+                .logoutSuccessUrl("/logouts")
+                .logoutUrl("/logouts")
+        .logoutSuccessHandler(logoutSuccessHandler());
+//                .addLogoutHandler(logoutHandler());
     }
 
     /**

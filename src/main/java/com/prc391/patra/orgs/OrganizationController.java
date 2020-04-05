@@ -1,6 +1,7 @@
 package com.prc391.patra.orgs;
 
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
@@ -31,6 +32,11 @@ public class OrganizationController {
         this.mapper = mapper;
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Organization>> getAllOrg() {
+        return ResponseEntity.ok(organizationService.getAllOrg());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Organization> getOrganization(
             @PathVariable("id") String id
@@ -47,21 +53,21 @@ public class OrganizationController {
 
     @PostMapping
     public ResponseEntity<Organization> insertOrganization(
-            @RequestBody CreateOrganizationRequest newOrg) {
+            @RequestBody CreateOrganizationRequest newOrg) throws UnauthorizedException {
         return ResponseEntity.ok(organizationService.insertOrganization(mapper.map(newOrg, Organization.class)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Organization> updateOrganization(
             @PathVariable("id") String id,
-            @RequestBody CreateOrganizationRequest updateOrg) throws EntityNotFoundException {
+            @RequestBody CreateOrganizationRequest updateOrg) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(organizationService.updateOrganization(id, mapper.map(updateOrg, Organization.class)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteOrganization(
             @PathVariable("id") String id
-    ) throws EntityNotFoundException {
+    ) throws EntityNotFoundException, UnauthorizedException {
         organizationService.deleteOrganization(id);
         return ResponseEntity.ok().build();
     }

@@ -1,6 +1,8 @@
 package com.prc391.patra.sheets;
 
+import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.sheets.requests.CreateSheetRequest;
 import com.prc391.patra.tasks.Task;
 import org.modelmapper.ModelMapper;
@@ -25,29 +27,29 @@ public class SheetController {
     }
 
     @GetMapping("/byOrg/{id}")
-    public  ResponseEntity<List<Sheet>> getSheetByOrgID(@PathVariable("id") String orgID) throws  EntityNotFoundException{
+    public  ResponseEntity<List<Sheet>> getSheetByOrgID(@PathVariable("id") String orgID) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(sheetService.getSheetFromOrgID(orgID));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Sheet> getSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException {
+    public ResponseEntity<Sheet> getSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException, UnauthorizedException {
         return ResponseEntity.ok(sheetService.getSheetById(sheetId));
     }
 
     @GetMapping("/{id}/tasks")
     public ResponseEntity<List<Task>> getTaskFromSheetId(
-            @PathVariable("id") String sheetId) throws EntityNotFoundException {
+            @PathVariable("id") String sheetId) throws EntityNotFoundException, UnauthorizedException {
         //let service return Task in order to use PostAuthorize
         return ResponseEntity.ok(sheetService.getTaskFromSheetId(sheetId));
     }
 
     @PostMapping
-    public ResponseEntity<Sheet> createSheet(@RequestBody CreateSheetRequest request) {
+    public ResponseEntity<Sheet> createSheet(@RequestBody CreateSheetRequest request) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         return ResponseEntity.ok(sheetService.insertSheet(mapper.map(request, Sheet.class)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteSheet(@PathVariable("id") String sheetId) {
+    public ResponseEntity deleteSheet(@PathVariable("id") String sheetId) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {
         sheetService.deleteSheet(sheetId);
         return ResponseEntity.ok().build();
     }

@@ -1,18 +1,23 @@
 package com.prc391.patra.tasks;
 
-import com.prc391.patra.config.security.PatraUserPrincipal;
+import com.prc391.patra.security.PatraUserPrincipal;
+import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
-import com.prc391.patra.sheets.SheetRepository;
+import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
 import com.prc391.patra.sheets.Sheet;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PostAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.prc391.patra.sheets.SheetRepository;
+import com.prc391.patra.users.UserRedisRepository;
+import com.prc391.patra.users.UserRepository;
+import com.prc391.patra.utils.AuthorizationUtils;
+import com.prc391.patra.utils.ControllerSupportUtils;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -20,97 +25,139 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Service
+@AllArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
     private final MemberRepository memberRepository;
     private final SheetRepository sheetRepository;
+    private final UserRedisRepository userRedisRepository;
+    private final UserRepository userRepository;
+    private final AuthorizationUtils authorizationUtils;
 
-    private final Logger logger;
+    private static final Logger logger = Logger.getLogger("TaskServivce");
 
-    @Autowired
-    public TaskService(TaskRepository taskRepository, MemberRepository memberRepository, SheetRepository sheetRepository) {
-        this.taskRepository = taskRepository;
-        this.memberRepository = memberRepository;
-        this.sheetRepository = sheetRepository;
-        this.logger = Logger.getLogger("TaskService");
-    }
-
-    //    @PostAuthorize("#Collections.contains(#Arrays.asList(#returnObject.assigneeMemberId), authentication.principal.currMemberId)")
-    //    @PostFilter(value = "filterObject.assignedMemberId == authentication.principal.currMemberId")
-
-//    @PostAuthorize("returnObject.assignee.contains(authentication.principal.currMemberId)")
-    Task getByTaskId(String taskId) throws EntityNotFoundException {
+    Task getByTaskId(String taskId) throws EntityNotFoundException, UnauthorizedException {
         Optional<Task> result = taskRepository.findById(taskId);
         if (result.isPresent()) {
-
+            Task task = result.get();
+            Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+            if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.READ_ACCESS)) {
+                throw new UnauthorizedException("You don't have permission to access this resource");
+            }
             return result.get();
         } else {
             throw new EntityNotFoundException();
         }
     }
 
-    public Task insertTask(Task task) throws EntityNotFoundException {
+    public Task insertTask(Task task) throws EntityNotFoundException, UnauthorizedException {
         Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
         if (!optionalSheet.isPresent()) {
             throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
         }
-        return taskRepository.save(task);
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        //write reporter MemberId
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+//        Optional<UserRedis> optionalUserRedis = userRedisRepository.findById(principal.getUsername());
+//        UserRedis userRedis = optionalUserRedis.get();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        //save the task to get Task's id, so that reporter can be added into assignee list
+        Task createdTask = taskRepository.save(task);
+        createdTask.setReporter(member.getMemberId());
+        createdTask.setAssignee(Arrays.asList(member.getMemberId()));
+        memberRepository.updateAssignedTask(member.getMemberId(), Arrays.asList(createdTask.getTaskId()));
+        return taskRepository.save(createdTask);
     }
 
-    Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException {
-        Task task = getByTaskId(taskId);
+    Task updateTask(String taskId, Task updateTask) throws EntityNotFoundException, UnauthorizedException {
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+        Task task = optionalTask.get();
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
+        }
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)){
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        if (!task.getReporter().equals(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
         task.mergeForUpdate(updateTask);
         return taskRepository.save(task);
     }
 
-    void deleteTask(String taskId) throws EntityNotFoundException {
-        boolean exist = taskRepository.existsById(taskId);
-        if (exist) {
-            taskRepository.deleteById(taskId);
-        } else {
+    void deleteTask(String taskId) throws EntityNotFoundException, UnauthorizedException {
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
             throw new EntityNotFoundException();
         }
+        Task task = optionalTask.get();
+        Optional<Sheet> optionalSheet = sheetRepository.findById(task.getSheetId());
+        if (!optionalSheet.isPresent()) {
+            throw new EntityNotFoundException("Sheet with id " + task.getSheetId() + " not exist!");
+        }
+        Sheet sheet = optionalSheet.get();
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)){
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        PatraUserPrincipal principal = ControllerSupportUtils.getPatraPrincipal();
+        Member member = memberRepository.getByUsernameAndOrgId(principal.getUsername(), sheet.getOrgId());
+        if (!task.getReporter().equals(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        //remove assign information
+        List<String> oldAssigneeIds = task.getAssignee();
+        taskRepository.removeAssignee(taskId, oldAssigneeIds);
+        memberRepository.removeAssignedTask(oldAssigneeIds, Arrays.asList(taskId));
+        taskRepository.deleteById(taskId);
+    }
+
+    public Task changeTaskStatus(String taskId, RefTaskStatus status) throws EntityNotFoundException, UnauthorizedException {
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+        Task task = optionalTask.get();
+        Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
+
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.WRITE_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        Member member = memberRepository.getByUsernameAndOrgId(ControllerSupportUtils.getPatraPrincipal().getUsername(), sheet.getOrgId());
+        if (!task.getAssignee().contains(member.getMemberId())) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
+        }
+        task.setStatusId(status.getStatusId());
+        taskRepository.save(task);
+        return task;
     }
 
     boolean assignToTask(String taskId, List<String> requestedMemberIds)
-            throws EntityNotFoundException {
+            throws EntityNotFoundException, UnauthorizedException {
         //TODO check user before add
-        Task task = this.getByTaskId(taskId);
+        Optional<Task> optionalTask = taskRepository.findById(taskId);
+        if (!optionalTask.isPresent()) {
+            throw new EntityNotFoundException("Task not exist");
+        }
+        Task task = optionalTask.get();
         Sheet sheet = sheetRepository.findById(task.getSheetId()).get();
         if (ObjectUtils.isEmpty(sheet)) {
-            throw new EntityNotFoundException("Task does not belong to a sheet??? Check the assignToTask() method in TaskService!");
+            throw new EntityNotFoundException("Task does not belong to a sheet. Check the assignToTask() method in TaskService!");
         }
-        //get currentMember's Member entity
-        //can't use PreAuthorize and PostAuthorize because the param does not contains
-        //org info, the return value is boolean which does not contain org info,
-        //need to get org info from repository, which Pre/PostAuthorize cannot do
-        //check in code instead
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (ObjectUtils.isEmpty(authentication)) {
-            //less likely to happen
-            logger.log(Level.WARNING, "Authentication is empty");
-            return false;
+        if (!authorizationUtils.authorizeAccess(sheet.getOrgId(), SecurityConstants.ADMIN_ACCESS)) {
+            throw new UnauthorizedException("You don't have permission to access this resource");
         }
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof PatraUserPrincipal)) {
-            logger.log(Level.WARNING, "AnonymousUser!");
-            return false;
-        }
-        Optional<Member> currMemberOptional = memberRepository.findById(((PatraUserPrincipal) authentication.getPrincipal()).getCurrMemberId());
-        if (!currMemberOptional.isPresent()) {
-            logger.log(Level.WARNING, "Current member does not exist in db!");
-            throw new EntityNotFoundException("Current member does not exist in db!");
-
-        }
-        //end get currMember's Member entity
-
-        //check currMember's orgId vs sheet's orgId
-        if (!currMemberOptional.get().getOrgId().equalsIgnoreCase(sheet.getOrgId())) {
-            // throw new ForbiddenException()
-            logger.log(Level.WARNING, "Current Member's organization_id: "
-                    + currMemberOptional.get().getOrgId() +
-                    " is not match with Sheet's organization_id: " + sheet.getOrgId());
-            return false;
+        if (CollectionUtils.isEmpty(requestedMemberIds)) {
+            requestedMemberIds = new ArrayList<>();
         }
 
         //validate each requestedMemberId:
@@ -136,7 +183,20 @@ public class TaskService {
             //no need to check
         }
         //two way embedded, update two documents at the same time
-        return taskRepository.updateAssignee(taskId, requestedMemberIds)
-                && memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
+        //remove all old assign information
+        List<String> oldAssigneeIds = task.getAssignee();
+        //remove all old assigneeList on Task
+        boolean taskResult = taskRepository.removeAssignee(taskId, oldAssigneeIds);
+        //remove all old assigned Task on old assigneeList
+        boolean memberResult = memberRepository.removeAssignedTask(oldAssigneeIds, Arrays.asList(taskId));
+        taskRepository.updateAssignee(taskId, requestedMemberIds);
+        memberRepository.updateAssignedTaskMultipleUser(requestedMemberIds, Arrays.asList(taskId));
+        return taskResult && memberResult;
+    }
+
+    public boolean attachImage(String taskId, String imagePath) throws EntityNotFoundException {
+        if (taskRepository.existsById(taskId))
+            throw new EntityNotFoundException();
+        return taskRepository.updateAttachImage(taskId, imagePath);
     }
 }
