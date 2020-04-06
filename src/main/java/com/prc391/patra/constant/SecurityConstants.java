@@ -10,7 +10,8 @@ public class SecurityConstants {
     public static final String TOKEN_PREFIX = "Bearer";
     public static final String HEADER_STRING = "Authorization";
 
-    public static final String GOOGLE_CLIENT_ID = "265164074357-8f2qcit939i1dqomo5gvq4uq31h3b7fi.apps.googleusercontent.com";
+//    public static final String GOOGLE_CLIENT_ID = "265164074357-8f2qcit939i1dqomo5gvq4uq31h3b7fi.apps.googleusercontent.com";
+    public static final String GOOGLE_CLIENT_ID = "265164074357-doqs9103pm155d2667k1vqgo8j8jb6kv.apps.googleusercontent.com";
 
     public static final String WRITE_ACCESS = "WRITE";
     public static final String READ_ACCESS = "READ";
