@@ -3,6 +3,7 @@ package com.prc391.patra.orgs;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<Member>> getAllMemberIdFromOrganizationId(
+    public ResponseEntity<List<MemberResponse>> getAllMemberFromOrganizationId(
             @PathVariable("id") String id) throws EntityNotFoundException {
         return ResponseEntity.ok(organizationService.getAllMemberFromOrgId(id));
     }

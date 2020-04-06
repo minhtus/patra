@@ -1,11 +1,13 @@
 package com.prc391.patra.orgs;
 
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.security.PatraUserPrincipal;
 import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.Member;
 import com.prc391.patra.members.MemberRepository;
+import com.prc391.patra.users.User;
 import com.prc391.patra.users.UserRedis;
 import com.prc391.patra.users.UserRedisRepository;
 import com.prc391.patra.users.UserRepository;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,7 +48,7 @@ public class OrganizationService {
         return optionalOrg.get();
     }
 
-    public List<Member> getAllMemberFromOrgId(String id) throws EntityNotFoundException {
+    public List<MemberResponse> getAllMemberFromOrgId(String id) throws EntityNotFoundException {
         Optional<Organization> optionalOrg = organizationRepository.findById(id);
         if (!optionalOrg.isPresent()) {
             throw new EntityNotFoundException("Organization with id " + id + " not exist.");
@@ -54,7 +57,18 @@ public class OrganizationService {
         if (CollectionUtils.isEmpty(memberList)) {
             throw new EntityNotFoundException("There are no Member in this organization.");
         }
-        return memberList;
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        for (Member member : memberList) {
+            Optional<User> optionalUser = userRepository.findById(member.getUsername());
+            if (optionalOrg.isPresent()) {
+                User user = optionalUser.get();
+                MemberResponse memberResponse = mapper.map(member, MemberResponse.class);
+                memberResponse.setFullName(user.getName());
+                memberResponseList.add(memberResponse);
+                memberResponse.setOrganization(optionalOrg.get());
+            }
+        }
+        return memberResponseList;
     }
 
     public Organization insertOrganization(Organization newOrg) throws UnauthorizedException {

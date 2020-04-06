@@ -13,4 +13,5 @@ public class MemberResponse {
     private String permission;
     private List<String> assignedTaskId;
     private Organization organization;
+    private String fullName;
 }
