@@ -4,6 +4,7 @@ import com.prc391.patra.constant.SecurityConstants;
 import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.OrganizationRepository;
 import com.prc391.patra.tasks.TaskRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +47,24 @@ public class MemberService {
         return optionalMember.get();
     }
 
-    public List<Member> getMultiMember(List<String> memberIds) throws EntityNotFoundException {
+    public List<MemberResponse> getMultiMember(List<String> memberIds) throws EntityNotFoundException {
         List<Member> optionalMember = (List<Member>) memberRepository.findAllById(memberIds);
         if (CollectionUtils.isEmpty((optionalMember))) {
             throw new EntityNotFoundException();
         }
-
-        return optionalMember;
+        List<MemberResponse> memberResponseList = new ArrayList<>();
+        for (Member member : optionalMember) {
+            Optional<User> optionalUser = userRepository.findById(member.getUsername());
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                MemberResponse memberResponse = mapper.map(member, MemberResponse.class);
+                memberResponse.setFullName(user.getName());
+                memberResponseList.add(memberResponse);
+                Optional<Organization> optionalOrganization = organizationRepository.findById(member.getOrgId());
+                memberResponse.setOrganization(optionalOrganization.get());
+            }
+        }
+        return memberResponseList;
     }
 
     public Member insertMember(Member newMember) throws EntityNotFoundException, EntityExistedException, UnauthorizedException {

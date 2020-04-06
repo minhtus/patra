@@ -4,6 +4,7 @@ import com.prc391.patra.exceptions.EntityExistedException;
 import com.prc391.patra.exceptions.EntityNotFoundException;
 import com.prc391.patra.exceptions.UnauthorizedException;
 import com.prc391.patra.members.requests.CreateMemberRequest;
+import com.prc391.patra.members.responses.MemberResponse;
 import com.prc391.patra.orgs.Organization;
 import com.prc391.patra.orgs.requests.CreateOrganizationRequest;
 import org.modelmapper.ModelMapper;
@@ -27,7 +28,7 @@ public class MemberController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<Member>> getMultiMember(
+    public ResponseEntity<List<MemberResponse>> getMultiMember(
             @RequestParam List<String> memberIDs
     ) throws EntityNotFoundException {
         return ResponseEntity.ok(memberService.getMultiMember(memberIDs));

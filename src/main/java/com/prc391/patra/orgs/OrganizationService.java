@@ -60,7 +60,7 @@ public class OrganizationService {
         List<MemberResponse> memberResponseList = new ArrayList<>();
         for (Member member : memberList) {
             Optional<User> optionalUser = userRepository.findById(member.getUsername());
-            if (optionalOrg.isPresent()) {
+            if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
                 MemberResponse memberResponse = mapper.map(member, MemberResponse.class);
                 memberResponse.setFullName(user.getName());
