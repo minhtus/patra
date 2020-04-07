@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Service
 public class CommentService {
@@ -27,6 +29,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final SheetRepository sheetRepository;
     private final AuthorizationUtils authorizationUtils;
+    private final Logger logger = Logger.getLogger("CommentService");
 
     @Autowired
     public CommentService(TaskRepository taskRepository, MemberRepository memberRepository, UserRepository userRepository, SheetRepository sheetRepository, AuthorizationUtils authorizationUtils) {
@@ -109,7 +112,8 @@ public class CommentService {
             }
             Optional<Member> optionalMember = memberRepository.findById(memberId);
             if (!optionalMember.isPresent()) {
-                throw new EntityNotFoundException("Member " + memberId + " is not exist");
+//                throw new EntityNotFoundException("Member " + memberId + " is not exist");
+                logger.log(Level.INFO, "Member is unassigned from department");
             }
             Member member = optionalMember.get();
             isAuthorized(task, member);
